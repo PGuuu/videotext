@@ -14,7 +14,6 @@
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
 
-    /* LOBBY */
     #lobby {
       height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 28px; padding: 24px;
@@ -44,7 +43,6 @@
     #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
     #status.err { color: #f85149; }
 
-    /* CONNECTING */
     #connectingScreen {
       display: none; height: 100vh; flex-direction: column;
       align-items: center; justify-content: center; gap: 20px; padding: 32px; background: var(--bg);
@@ -54,11 +52,9 @@
     #connectingScreen h2 { font-size: 20px; font-weight: 700; }
     #connectingScreen p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
 
-    /* CALL SCREEN */
     #callScreen { display: none; height: 100vh; height: 100dvh; flex-direction: column; }
     #callTop { flex: 1; display: flex; min-height: 0; }
 
-    /* LEFT: caption strip */
     #captionStrip {
       width: 33.333%; background: #080b10;
       border-right: 1px solid rgba(255,255,255,0.08);
@@ -96,7 +92,6 @@
       text-align: center; padding: 24px 8px; line-height: 2.2; width: 100%;
     }
 
-    /* RIGHT: video */
     #videoWrap { flex: 1; position: relative; background: #000; overflow: hidden; }
     #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
     #localVideo {
@@ -124,7 +119,6 @@
     .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 48px; height: 48px; }
     .ctrl-btn:active { transform: scale(0.9); }
 
-    /* BOTTOM: input */
     #inputArea {
       background: var(--bg); border-top: 1px solid var(--border);
       padding: 10px 12px 14px; display: none; gap: 8px; align-items: flex-end;
@@ -142,7 +136,6 @@
     }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* MODALS */
     .modal-bg {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
       align-items: center; justify-content: center; z-index: 100; padding: 24px;
@@ -174,7 +167,6 @@
 </head>
 <body>
 
-<!-- LOBBY -->
 <div id="lobby">
   <div class="logo">
     <div class="logo-icon">📞</div>
@@ -191,7 +183,6 @@
   </div>
 </div>
 
-<!-- CONNECTING -->
 <div id="connectingScreen">
   <div class="ci">📡</div>
   <h2>連線中…</h2>
@@ -199,7 +190,6 @@
   <div id="connectErr" style="font-size:13px;color:#f85149;text-align:center;margin-top:8px;"></div>
 </div>
 
-<!-- SHARE MODAL -->
 <div class="modal-bg" id="shareModal">
   <div class="modal-card">
     <h2>📤 傳連結給外公</h2>
@@ -210,7 +200,6 @@
   </div>
 </div>
 
-<!-- CALL SCREEN -->
 <div id="callScreen">
   <div id="callTop">
     <div id="captionStrip">
@@ -244,8 +233,9 @@
 <script>
   let peer, conn = null, call = null, localStream = null;
   let myPeerId = '', allText = '', charFontSize = 32;
-  let micOn = true, camOn = true, isTyper = false;
+  let micOn = true, camOn = true;
   let charElements = [];
+  let iceServersCache = null;
 
   const params = new URLSearchParams(window.location.search);
   const joinId = params.get('join');
@@ -260,34 +250,26 @@
     charFontSize = Math.floor(window.innerWidth * 0.333 * 0.82);
   }
 
-  // ── ICE CONFIG with STUN + multiple free TURN servers ──
-  function peerConfig() {
-    return {
+  // ── Fetch TURN credentials from Metered ──
+  async function getIceServers() {
+    if (iceServersCache) return iceServersCache;
+    try {
+      const res = await fetch('https://paulgulla.metered.live/api/v1/turn/credentials?apiKey=c9122c7ffa5323cf3e1e2e5fed97b3346567');
+      const servers = await res.json();
+      iceServersCache = servers;
+      return servers;
+    } catch(e) {
+      // Fallback to Google STUN if fetch fails
+      return [{ urls: 'stun:stun.l.google.com:19302' }];
+    }
+  }
+
+  async function makePeer(id) {
+    const iceServers = await getIceServers();
+    return new Peer(id, {
       host: '0.peerjs.com', port: 443, path: '/', secure: true,
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          // Free TURN from Open Relay Project (no signup needed)
-          {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          },
-          {
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
-          }
-        ],
-        iceCandidatePoolSize: 10
-      }
-    };
+      config: { iceServers, iceCandidatePoolSize: 10 }
+    });
   }
 
   // ── RENDER ──
@@ -361,19 +343,17 @@
         if (i === last) el.classList.add('view-bottom');
       }
     }
-    // Auto-scroll typer to keep highlight visible
     const firstEl = charElements[first];
     if (firstEl) {
       const scrollEl = document.getElementById('captionScroll');
-      const stripTop = scrollEl.scrollTop;
-      const stripBottom = stripTop + scrollEl.clientHeight;
+      const stripTop = scrollEl.scrollTop, stripBottom = stripTop + scrollEl.clientHeight;
       if (firstEl.offsetTop < stripTop || firstEl.offsetTop > stripBottom) {
         scrollEl.scrollTo({ top: firstEl.offsetTop - 40, behavior: 'smooth' });
       }
     }
   }
 
-  // ── DRAG/SWIPE SCROLL ──
+  // ── DRAG/SWIPE ──
   function initDragScroll(el, onScrollCb) {
     let startY = 0, startScroll = 0, isDragging = false;
     let velY = 0, lastY = 0, lastT = 0, rafId = null;
@@ -407,7 +387,6 @@
     el.addEventListener('touchend', () => onEnd());
   }
 
-  // ── MIC / CAM ──
   function toggleMic() {
     micOn = !micOn;
     if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = micOn);
@@ -432,7 +411,6 @@
 
   // ── TYPER ──
   async function startAsTyper() {
-    isTyper = true;
     document.getElementById('joinBtn').disabled = true;
     document.getElementById('status').textContent = '取得相機中…';
     try { await getMedia(); }
@@ -441,8 +419,11 @@
       document.getElementById('status').className = 'err';
       document.getElementById('joinBtn').disabled = false; return;
     }
+
+    document.getElementById('status').textContent = '準備連線中…';
     myPeerId = randId();
-    peer = new Peer(myPeerId, peerConfig());
+    peer = await makePeer(myPeerId);
+
     peer.on('error', e => { document.getElementById('status').textContent = '錯誤：' + e.type; });
     peer.on('open', () => {
       document.getElementById('lobby').style.display = 'none';
@@ -483,17 +464,17 @@
 
   // ── VIEWER ──
   async function startAsViewer(targetId) {
-    isTyper = false;
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('connectingScreen').style.display = 'flex';
     try { await getMedia(); }
     catch(e) { document.getElementById('connectErr').textContent = '無法取得相機，請確認權限'; return; }
 
     myPeerId = randId();
-    peer = new Peer(myPeerId, peerConfig());
+    peer = await makePeer(myPeerId);
+
     peer.on('error', e => { document.getElementById('connectErr').textContent = '連線錯誤：' + e.type; });
     peer.on('open', () => {
-      conn = peer.connect(targetId);
+      conn = peer.connect(targetId, { reliable: true });
       conn.on('open', () => {
         conn.on('data', onData);
         document.getElementById('connectingScreen').style.display = 'none';
@@ -502,15 +483,16 @@
         document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
       });
       conn.on('error', () => { document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話'; });
+
       call = peer.call(targetId, localStream);
       call.on('stream', s => {
         document.getElementById('remoteVideo').srcObject = s;
         document.getElementById('waitOverlay').style.display = 'none';
       });
+      call.on('error', () => { document.getElementById('connectErr').textContent = '視訊連線失敗'; });
     });
   }
 
-  // ── DATA ──
   function onData(msg) {
     if (msg.type === 'text') {
       allText = msg.text; renderText(allText);
