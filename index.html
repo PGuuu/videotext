@@ -14,7 +14,7 @@
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
 
-    /* LOBBY */
+    /* ── LOBBY ── */
     #lobby {
       height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 28px; padding: 24px;
@@ -44,73 +44,195 @@
     #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
     #status.err { color: #f85149; }
 
-    /* CALL SCREEN */
-    #callScreen { display: none; flex-direction: column; height: 100vh; height: 100dvh; }
+    /* ── CONNECTING ── */
+    #connectingScreen {
+      display: none; height: 100vh; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px; padding: 32px; background: var(--bg);
+    }
+    #connectingScreen .ci { font-size: 60px; animation: spin 2s linear infinite; }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    #connectingScreen h2 { font-size: 20px; font-weight: 700; }
+    #connectingScreen p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
+
+    /* ── CALL SCREEN ── */
+    #callScreen {
+      display: none;
+      height: 100vh; height: 100dvh;
+      flex-direction: column;
+    }
+
+    /* Top: video + caption strip */
+    #callTop {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* LEFT: vertical caption strip ~1/3 */
+    #captionStrip {
+      width: 33%;
+      background: #0a0a0f;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #captionScroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px 0;
+      scroll-behavior: smooth;
+      /* hide scrollbar visually */
+      scrollbar-width: none;
+    }
+    #captionScroll::-webkit-scrollbar { display: none; }
+
+    #captionText {
+      /* Vertical Chinese: each char on its own line */
+      writing-mode: horizontal-tb; /* we'll use one-char-per-line via JS */
+      padding: 0 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .char-block {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      color: #fff;
+      width: 100%;
+    }
+    .char-block.space { height: 14px; } /* blank line between messages */
+    .char-block.highlight { color: #60a5fa; } /* current scroll position marker */
+
+    /* Scroll indicator */
+    #scrollIndicator {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 40px;
+      background: linear-gradient(to top, rgba(10,10,15,0.95), transparent);
+      display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 6px;
+      pointer-events: none;
+    }
+    #scrollIndicator span { font-size: 11px; color: var(--muted); }
+
+    /* Caption placeholder */
+    #captionPlaceholder {
+      color: rgba(255,255,255,0.15);
+      font-size: 12px;
+      text-align: center;
+      padding: 20px 8px;
+      line-height: 2;
+    }
+
+    /* RIGHT: video */
     #videoWrap {
-      flex: 1; position: relative; background: #000; min-height: 0;
-      display: flex; align-items: center; justify-content: center;
+      flex: 1;
+      position: relative;
+      background: #000;
     }
     #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
     #localVideo {
-      position: absolute; bottom: 70px; right: 12px; width: 90px; height: 120px;
-      border-radius: 10px; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); background: #111;
+      position: absolute; bottom: 60px; right: 8px;
+      width: 72px; height: 96px; border-radius: 8px;
+      object-fit: cover; border: 2px solid rgba(255,255,255,0.2); background: #111;
     }
     #waitOverlay {
       position: absolute; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 14px; color: var(--muted);
+      align-items: center; justify-content: center; gap: 10px; color: var(--muted);
       background: rgba(0,0,0,0.6);
     }
-    #waitOverlay .wi { font-size: 52px; }
-    #waitOverlay p { font-size: 14px; text-align: center; line-height: 1.7; padding: 0 24px; }
+    #waitOverlay .wi { font-size: 40px; }
+    #waitOverlay p { font-size: 12px; text-align: center; line-height: 1.7; padding: 0 12px; }
 
-    /* Controls bar */
-    #controls {
+    /* Video controls */
+    #vidControls {
       position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 10px 16px 12px;
-      display: flex; align-items: center; justify-content: center; gap: 14px;
-      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-      z-index: 10;
+      padding: 8px 10px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
     }
     .ctrl-btn {
-      width: 50px; height: 50px; border-radius: 50%; border: none;
+      width: 42px; height: 42px; border-radius: 50%; border: none;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px; cursor: pointer; transition: all 0.18s;
-      background: rgba(255,255,255,0.15);
+      font-size: 18px; cursor: pointer; background: rgba(255,255,255,0.15);
+      transition: all 0.15s;
     }
     .ctrl-btn.off { background: rgba(248,81,73,0.75); }
-    .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 56px; height: 56px; font-size: 24px; }
-    .ctrl-btn:active { transform: scale(0.92); }
-    .ctrl-label { font-size: 10px; color: rgba(255,255,255,0.55); text-align: center; margin-top: 3px; }
-    .ctrl-wrap { display: flex; flex-direction: column; align-items: center; }
+    .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 48px; height: 48px; }
+    .ctrl-btn:active { transform: scale(0.9); }
 
-    /* CAPTION AREA */
-    #captionArea { background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
-    #captionDisplay {
-      flex: 1; padding: 18px 18px 10px; display: flex; flex-direction: column;
-      justify-content: flex-end; gap: 6px; overflow: hidden; min-height: 160px;
+    /* ── BOTTOM: input area (typer only) ── */
+    #inputArea {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 10px 12px 14px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
     }
-    .caption-line { line-height: 1.35; transition: all 0.2s; }
-    .caption-line.old { color: var(--muted); }
-    .caption-line.cur { color: #fff; font-weight: 700; }
-    .ph { color: rgba(255,255,255,0.16); font-size: 17px; text-align: center; margin: auto; line-height: 1.9; }
-    #fontControl { padding: 8px 16px 14px; display: flex; align-items: center; gap: 10px; }
+
+    #inputRow {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    #msgInput {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 16px;
+      color: var(--text);
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      min-height: 44px;
+      max-height: 100px;
+    }
+    #msgInput:focus { border-color: var(--blue); }
+
+    .send-btn {
+      padding: 10px 16px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #388bfd, #1f6feb); color: #fff;
+      font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap; height: 44px;
+    }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Scroll controls (typer only) */
+    #scrollControls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    #scrollControls span { font-size: 11px; color: var(--muted); flex: 1; }
+    .scroll-btn {
+      padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06); color: var(--text);
+      font-size: 13px; font-family: inherit; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .scroll-btn:active { background: rgba(255,255,255,0.12); }
+
+    /* Font size control (viewer) */
+    #fontControl {
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding: 10px 14px 14px; display: none; align-items: center; gap: 10px;
+    }
     #fontControl span { font-size: 12px; color: var(--muted); }
     #fontControl input[type=range] { flex: 1; accent-color: var(--blue); }
     #fontLabel { font-size: 12px; color: var(--blue); min-width: 36px; text-align: right; }
-    #typerArea { padding: 12px 14px 18px; display: flex; flex-direction: column; gap: 10px; }
-    #typerArea textarea {
-      width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
-      border-radius: 12px; padding: 13px; font-size: 17px; color: var(--text);
-      font-family: inherit; resize: none; outline: none; min-height: 78px;
-    }
-    #typerArea textarea:focus { border-color: var(--blue); }
-    .send-btn {
-      width: 100%; padding: 14px; border-radius: 12px; border: none;
-      background: linear-gradient(135deg, #388bfd, #1f6feb); color: #fff;
-      font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(56,139,253,0.28);
-    }
-    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* MODALS */
     .modal-bg {
@@ -127,7 +249,7 @@
     .modal-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
     .link-box {
       background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px;
-      font-size: 13px; color: var(--blue); border: 1px solid var(--border);
+      font-size: 12px; color: var(--blue); border: 1px solid var(--border);
       word-break: break-all; line-height: 1.5;
     }
     .btn-blue {
@@ -140,17 +262,6 @@
       background: var(--accent); color: #fff;
       font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
     }
-
-    /* CONNECTING SCREEN */
-    #connectingScreen {
-      display: none; height: 100vh; flex-direction: column;
-      align-items: center; justify-content: center; gap: 20px; padding: 32px;
-      background: var(--bg);
-    }
-    #connectingScreen .ci { font-size: 60px; animation: spin 2s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    #connectingScreen h2 { font-size: 20px; font-weight: 700; }
-    #connectingScreen p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
   </style>
 </head>
 <body>
@@ -172,19 +283,19 @@
   </div>
 </div>
 
-<!-- CONNECTING SCREEN -->
+<!-- CONNECTING -->
 <div id="connectingScreen">
   <div class="ci">📡</div>
   <h2>連線中…</h2>
   <p>正在連接到對方，請稍候。</p>
-  <div id="connectErr" style="font-size:13px;color:#f85149;text-align:center;"></div>
+  <div id="connectErr" style="font-size:13px;color:#f85149;text-align:center;margin-top:8px;"></div>
 </div>
 
 <!-- SHARE MODAL -->
 <div class="modal-bg" id="shareModal">
   <div class="modal-card">
     <h2>📤 傳連結給外公</h2>
-    <p>用 LINE 把這個連結傳給外公，外公點開就會自動加入，不需要輸入任何東西。</p>
+    <p>用 LINE 把這個連結傳給外公，外公點開就會自動加入。</p>
     <div class="link-box" id="shareLink"></div>
     <button class="btn-blue" id="copyBtn" onclick="copyLink()">複製連結</button>
     <button class="btn-green" onclick="document.getElementById('shareModal').classList.remove('show')">好，等外公連線</button>
@@ -193,52 +304,64 @@
 
 <!-- CALL SCREEN -->
 <div id="callScreen">
-  <div id="videoWrap">
-    <video id="remoteVideo" autoplay playsinline></video>
-    <video id="localVideo" autoplay playsinline muted></video>
-    <div id="waitOverlay">
-      <div class="wi">📡</div>
-      <p id="waitText">等待外公連線…<br>把連結傳給外公後，<br>外公點開就會出現在這裡。</p>
+  <div id="callTop">
+
+    <!-- LEFT: vertical caption strip -->
+    <div id="captionStrip">
+      <div id="captionScroll">
+        <div id="captionText">
+          <div id="captionPlaceholder">等待<br>訊息<br>⋯</div>
+        </div>
+      </div>
+      <div id="scrollIndicator"><span id="scrollHint"></span></div>
     </div>
 
-    <!-- Controls bar -->
-    <div id="controls">
-      <div class="ctrl-wrap">
-        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">🎤</button>
-        <div class="ctrl-label" id="micLabel">靜音</div>
+    <!-- RIGHT: video -->
+    <div id="videoWrap">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <video id="localVideo" autoplay playsinline muted></video>
+      <div id="waitOverlay">
+        <div class="wi">📡</div>
+        <p id="waitText">等待對方連線…</p>
       </div>
-      <div class="ctrl-wrap">
-        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">📷</button>
-        <div class="ctrl-label" id="camLabel">關鏡頭</div>
+      <div id="vidControls">
+        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()" title="靜音">🎤</button>
+        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="關鏡頭">📷</button>
+        <button class="ctrl-btn end" onclick="endCall()" title="結束">📵</button>
       </div>
-      <div class="ctrl-wrap">
-        <button class="ctrl-btn end" onclick="endCall()">📵</button>
-        <div class="ctrl-label">結束</div>
-      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM: typer input -->
+  <div id="inputArea">
+    <div id="inputRow">
+      <textarea id="msgInput" placeholder="輸入文字…" rows="1"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送</button>
+    </div>
+    <div id="scrollControls">
+      <span id="scrollStatus">遠端捲動控制</span>
+      <button class="scroll-btn" onclick="remoteScroll('up')">▲ 往上</button>
+      <button class="scroll-btn" onclick="remoteScroll('down')">▼ 往下</button>
     </div>
   </div>
 
-  <div id="captionArea">
-    <div id="captionDisplay" style="display:none;">
-      <div class="ph" id="ph">等待對方傳訊息…</div>
-    </div>
-    <div id="fontControl" style="display:none;">
-      <span>A</span>
-      <input type="range" min="26" max="90" value="54" id="fontSlider" oninput="updateFont(this.value)">
-      <span style="font-size:20px">A</span>
-      <span id="fontLabel">54px</span>
-    </div>
-    <div id="typerArea" style="display:none;">
-      <textarea id="msgInput" placeholder="輸入要說的話…外公會看到大字" rows="3"></textarea>
-      <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送 ➤</button>
-    </div>
+  <!-- BOTTOM: viewer font control -->
+  <div id="fontControl">
+    <span>字</span>
+    <input type="range" min="20" max="48" value="28" id="fontSlider" oninput="updateFont(this.value)">
+    <span style="font-size:18px">字</span>
+    <span id="fontLabel">28px</span>
   </div>
 </div>
 
 <script>
   let peer, conn = null, call = null, localStream = null;
-  let captions = [], fontSize = 54, myPeerId = '';
+  let captions = [], fontSize = 28, myPeerId = '';
   let micOn = true, camOn = true;
+  let isTyper = false;
+  let allText = ''; // all text ever sent
+
   const params = new URLSearchParams(window.location.search);
   const joinId = params.get('join');
 
@@ -246,14 +369,8 @@
     if (joinId) startAsViewer(joinId);
   });
 
-  function randId() {
-    return 'fam-' + Math.random().toString(36).slice(2, 10);
-  }
-
-  function makeShareLink(id) {
-    return window.location.origin + window.location.pathname + '?join=' + id;
-  }
-
+  function randId() { return 'fam-' + Math.random().toString(36).slice(2, 10); }
+  function makeShareLink(id) { return window.location.origin + window.location.pathname + '?join=' + id; }
   function peerConfig() {
     return {
       host: '0.peerjs.com', port: 443, path: '/', secure: true,
@@ -261,16 +378,72 @@
     };
   }
 
-  // ── MIC / CAM TOGGLES ──
+  // ── RENDER VERTICAL TEXT ──
+  function renderText(text) {
+    const container = document.getElementById('captionText');
+    const placeholder = document.getElementById('captionPlaceholder');
+    if (placeholder) placeholder.style.display = 'none';
+
+    // Clear existing char blocks
+    container.querySelectorAll('.char-block').forEach(el => el.remove());
+
+    // Render each character as a block
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const div = document.createElement('div');
+      if (ch === '\n' || ch === ' ') {
+        div.className = 'char-block space';
+      } else {
+        div.className = 'char-block';
+        div.textContent = ch;
+        div.style.fontSize = fontSize + 'px';
+      }
+      container.appendChild(div);
+    }
+
+    updateScrollHint();
+  }
+
+  function updateScrollHint() {
+    const el = document.getElementById('captionScroll');
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const hint = document.getElementById('scrollHint');
+    if (remaining > 20) {
+      hint.textContent = '▼ 還有更多';
+    } else {
+      hint.textContent = '';
+    }
+  }
+
+  // ── SCROLL ──
+  function scrollCaption(direction) {
+    const el = document.getElementById('captionScroll');
+    const amount = el.clientHeight * 0.7;
+    el.scrollBy({ top: direction === 'down' ? amount : -amount, behavior: 'smooth' });
+    setTimeout(updateScrollHint, 400);
+  }
+
+  function remoteScroll(direction) {
+    // Scroll our own view
+    scrollCaption(direction);
+    // Send scroll command to viewer
+    if (conn && conn.open) {
+      conn.send({ type: 'scroll', direction });
+    }
+    // Update status
+    const status = document.getElementById('scrollStatus');
+    status.textContent = direction === 'down' ? '↓ 已向下捲動' : '↑ 已向上捲動';
+    setTimeout(() => { status.textContent = '遠端捲動控制'; }, 1500);
+  }
+
+  // ── MIC / CAM ──
   function toggleMic() {
     if (!localStream) return;
     micOn = !micOn;
     localStream.getAudioTracks().forEach(t => t.enabled = micOn);
     const btn = document.getElementById('micBtn');
-    const lbl = document.getElementById('micLabel');
     btn.textContent = micOn ? '🎤' : '🔇';
     btn.classList.toggle('off', !micOn);
-    lbl.textContent = micOn ? '靜音' : '取消靜音';
   }
 
   function toggleCam() {
@@ -278,15 +451,14 @@
     camOn = !camOn;
     localStream.getVideoTracks().forEach(t => t.enabled = camOn);
     const btn = document.getElementById('camBtn');
-    const lbl = document.getElementById('camLabel');
     btn.textContent = camOn ? '📷' : '🚫';
     btn.classList.toggle('off', !camOn);
-    lbl.textContent = camOn ? '關鏡頭' : '開鏡頭';
     document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.3';
   }
 
   // ── TYPER ──
   async function startAsTyper() {
+    isTyper = true;
     document.getElementById('joinBtn').disabled = true;
     document.getElementById('status').textContent = '取得相機中…';
     try {
@@ -304,13 +476,19 @@
     peer.on('open', () => {
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('callScreen').style.display = 'flex';
-      document.getElementById('typerArea').style.display = 'flex';
+      document.getElementById('inputArea').style.display = 'flex';
+
       const link = makeShareLink(myPeerId);
       document.getElementById('shareLink').textContent = link;
       document.getElementById('shareModal').classList.add('show');
+
       peer.on('connection', c => {
         conn = c;
-        conn.on('open', () => { document.getElementById('sendBtn').disabled = false; });
+        conn.on('open', () => {
+          document.getElementById('sendBtn').disabled = false;
+          // Send existing text to new viewer
+          if (allText) conn.send({ type: 'text', text: allText });
+        });
       });
       peer.on('call', incoming => {
         call = incoming;
@@ -325,6 +503,7 @@
 
   // ── VIEWER ──
   async function startAsViewer(targetId) {
+    isTyper = false;
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('connectingScreen').style.display = 'flex';
     try {
@@ -351,46 +530,51 @@
         document.getElementById('remoteVideo').srcObject = s;
         document.getElementById('waitOverlay').style.display = 'none';
       });
-      call.on('error', () => {
-        document.getElementById('connectErr').textContent = '視訊連線失敗';
-      });
     });
   }
 
   function showViewerCallScreen() {
     document.getElementById('connectingScreen').style.display = 'none';
     document.getElementById('callScreen').style.display = 'flex';
-    document.getElementById('captionDisplay').style.display = 'flex';
     document.getElementById('fontControl').style.display = 'flex';
     document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
   }
 
-  // ── CAPTIONS ──
-  function onData(text) {
-    document.getElementById('ph').style.display = 'none';
-    captions.push(text);
-    if (captions.length > 3) captions = captions.slice(-3);
-    renderCaptions();
+  // ── RECEIVE DATA (viewer) ──
+  function onData(msg) {
+    if (msg.type === 'text') {
+      allText = msg.text;
+      renderText(allText);
+    } else if (msg.type === 'scroll') {
+      scrollCaption(msg.direction);
+    }
   }
 
-  function renderCaptions() {
-    const display = document.getElementById('captionDisplay');
-    display.querySelectorAll('.caption-line').forEach(el => el.remove());
-    captions.forEach((line, i) => {
-      const isCur = i === captions.length - 1;
-      const div = document.createElement('div');
-      div.className = 'caption-line ' + (isCur ? 'cur' : 'old');
-      div.style.fontSize = (isCur ? fontSize : Math.max(fontSize - 16, 18)) + 'px';
-      div.textContent = line;
-      display.appendChild(div);
-    });
-  }
-
+  // ── SEND ──
   function sendMsg() {
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
-    if (!text || !conn) return;
-    conn.send(text);
+    if (!text) return;
+
+    // Append to allText with newline separator
+    if (allText.length > 0) allText += '\n';
+    allText += text;
+
+    // Render locally
+    renderText(allText);
+
+    // Scroll to bottom on our side
+    setTimeout(() => {
+      const el = document.getElementById('captionScroll');
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      updateScrollHint();
+    }, 50);
+
+    // Send full text to viewer (so they always have complete version)
+    if (conn && conn.open) {
+      conn.send({ type: 'text', text: allText });
+    }
+
     input.value = '';
     input.focus();
   }
@@ -398,12 +582,12 @@
   function updateFont(val) {
     fontSize = parseInt(val);
     document.getElementById('fontLabel').textContent = val + 'px';
-    if (captions.length) renderCaptions();
+    // Re-render with new size
+    if (allText) renderText(allText);
   }
 
   function copyLink() {
-    const link = document.getElementById('shareLink').textContent;
-    navigator.clipboard.writeText(link).catch(() => {});
+    navigator.clipboard.writeText(document.getElementById('shareLink').textContent).catch(() => {});
     const btn = document.getElementById('copyBtn');
     btn.textContent = '✓ 已複製！';
     setTimeout(() => btn.textContent = '複製連結', 2000);
@@ -414,16 +598,20 @@
     if (conn) { conn.close(); conn = null; }
     if (peer) { peer.destroy(); peer = null; }
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-    micOn = true; camOn = true;
+    micOn = true; camOn = true; allText = '';
     window.history.replaceState({}, '', window.location.pathname);
     location.reload();
   }
 
+  // Enter to send
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && document.activeElement?.id === 'msgInput') {
       e.preventDefault(); sendMsg();
     }
   });
+
+  // Update scroll hint on manual scroll
+  document.addEventListener('scroll', () => updateScrollHint(), true);
 </script>
 </body>
 </html>
