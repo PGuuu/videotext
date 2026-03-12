@@ -387,4 +387,43 @@
   }
 
   function sendMsg() {
-    const input = documen
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text || !conn) return;
+    conn.send(text);
+    input.value = '';
+    input.focus();
+  }
+
+  function updateFont(val) {
+    fontSize = parseInt(val);
+    document.getElementById('fontLabel').textContent = val + 'px';
+    if (captions.length) renderCaptions();
+  }
+
+  function copyLink() {
+    const link = document.getElementById('shareLink').textContent;
+    navigator.clipboard.writeText(link).catch(() => {});
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 已複製！';
+    setTimeout(() => btn.textContent = '複製連結', 2000);
+  }
+
+  function endCall() {
+    if (call) { call.close(); call = null; }
+    if (conn) { conn.close(); conn = null; }
+    if (peer) { peer.destroy(); peer = null; }
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    micOn = true; camOn = true;
+    window.history.replaceState({}, '', window.location.pathname);
+    location.reload();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && document.activeElement?.id === 'msgInput') {
+      e.preventDefault(); sendMsg();
+    }
+  });
+</script>
+</body>
+</html>
