@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>家人通話</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,9 +12,9 @@
       --bg: #0d1117; --surface: #161b22; --border: rgba(255,255,255,0.09);
       --accent: #2ea043; --blue: #388bfd; --text: #e6edf3; --muted: rgba(230,237,243,0.4);
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; touch-action: none; }
 
-    /* ── LOBBY ── */
+    /* LOBBY */
     #lobby {
       height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 28px; padding: 24px;
@@ -44,7 +44,7 @@
     #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
     #status.err { color: #f85149; }
 
-    /* ── CONNECTING ── */
+    /* CONNECTING */
     #connectingScreen {
       display: none; height: 100vh; flex-direction: column;
       align-items: center; justify-content: center; gap: 20px; padding: 32px; background: var(--bg);
@@ -54,185 +54,117 @@
     #connectingScreen h2 { font-size: 20px; font-weight: 700; }
     #connectingScreen p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
 
-    /* ── CALL SCREEN ── */
-    #callScreen {
-      display: none;
-      height: 100vh; height: 100dvh;
-      flex-direction: column;
-    }
+    /* CALL SCREEN */
+    #callScreen { display: none; height: 100vh; height: 100dvh; flex-direction: column; }
 
-    /* Top: video + caption strip */
-    #callTop {
-      flex: 1;
-      display: flex;
-      min-height: 0;
-      position: relative;
-    }
+    #callTop { flex: 1; display: flex; min-height: 0; }
 
-    /* LEFT: vertical caption strip ~1/3 */
+    /* LEFT: caption strip — 1/3 width */
     #captionStrip {
-      width: 33%;
-      background: #0a0a0f;
-      border-right: 1px solid rgba(255,255,255,0.1);
-      display: flex;
-      flex-direction: column;
+      width: 33.333%;
+      background: #080b10;
+      border-right: 1px solid rgba(255,255,255,0.08);
       position: relative;
       overflow: hidden;
+      cursor: grab;
+      user-select: none;
     }
+    #captionStrip:active { cursor: grabbing; }
 
     #captionScroll {
-      flex: 1;
-      overflow-y: auto;
+      height: 100%;
+      overflow-y: scroll;
       overflow-x: hidden;
-      padding: 16px 0;
-      scroll-behavior: smooth;
-      /* hide scrollbar visually */
       scrollbar-width: none;
+      /* disable native touch scroll — we handle it ourselves */
+      touch-action: none;
     }
     #captionScroll::-webkit-scrollbar { display: none; }
 
     #captionText {
-      /* Vertical Chinese: each char on its own line */
-      writing-mode: horizontal-tb; /* we'll use one-char-per-line via JS */
-      padding: 0 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      padding: 20px 0 40px;
+      gap: 0;
     }
 
-    .char-block {
-      font-size: 28px;
-      font-weight: 700;
-      line-height: 1.2;
+    .char-el {
+      /* Font size set dynamically to nearly fill strip width */
+      font-weight: 900;
+      line-height: 1.15;
       text-align: center;
       color: #fff;
       width: 100%;
     }
-    .char-block.space { height: 14px; } /* blank line between messages */
-    .char-block.highlight { color: #60a5fa; } /* current scroll position marker */
+    .char-space { height: 1em; width: 100%; }
 
-    /* Scroll indicator */
-    #scrollIndicator {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 40px;
-      background: linear-gradient(to top, rgba(10,10,15,0.95), transparent);
-      display: flex; align-items: flex-end; justify-content: center;
-      padding-bottom: 6px;
-      pointer-events: none;
+    /* fade overlay top/bottom */
+    #captionStrip::before, #captionStrip::after {
+      content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
     }
-    #scrollIndicator span { font-size: 11px; color: var(--muted); }
+    #captionStrip::before { top: 0; height: 32px; background: linear-gradient(to bottom, #080b10, transparent); }
+    #captionStrip::after  { bottom: 0; height: 48px; background: linear-gradient(to top, #080b10, transparent); }
 
-    /* Caption placeholder */
+    /* drag hint */
+    #dragHint {
+      position: absolute; bottom: 8px; left: 0; right: 0;
+      text-align: center; font-size: 10px; color: rgba(255,255,255,0.2);
+      pointer-events: none; z-index: 3;
+    }
+
+    /* placeholder */
     #captionPlaceholder {
-      color: rgba(255,255,255,0.15);
-      font-size: 12px;
-      text-align: center;
-      padding: 20px 8px;
-      line-height: 2;
+      color: rgba(255,255,255,0.12); font-size: 13px;
+      text-align: center; padding: 24px 8px; line-height: 2.2;
     }
 
     /* RIGHT: video */
-    #videoWrap {
-      flex: 1;
-      position: relative;
-      background: #000;
-    }
+    #videoWrap { flex: 1; position: relative; background: #000; overflow: hidden; }
     #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
     #localVideo {
-      position: absolute; bottom: 60px; right: 8px;
+      position: absolute; bottom: 58px; right: 8px;
       width: 72px; height: 96px; border-radius: 8px;
-      object-fit: cover; border: 2px solid rgba(255,255,255,0.2); background: #111;
+      object-fit: cover; border: 2px solid rgba(255,255,255,0.18); background: #111;
     }
     #waitOverlay {
       position: absolute; inset: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 10px; color: var(--muted);
       background: rgba(0,0,0,0.6);
     }
-    #waitOverlay .wi { font-size: 40px; }
-    #waitOverlay p { font-size: 12px; text-align: center; line-height: 1.7; padding: 0 12px; }
-
-    /* Video controls */
+    #waitOverlay .wi { font-size: 38px; }
+    #waitOverlay p { font-size: 12px; text-align: center; line-height: 1.7; padding: 0 10px; }
     #vidControls {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 8px 10px;
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 10px;
       display: flex; align-items: center; justify-content: center; gap: 10px;
       background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
     }
     .ctrl-btn {
       width: 42px; height: 42px; border-radius: 50%; border: none;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; cursor: pointer; background: rgba(255,255,255,0.15);
-      transition: all 0.15s;
+      font-size: 18px; cursor: pointer; background: rgba(255,255,255,0.15); transition: all 0.15s;
     }
     .ctrl-btn.off { background: rgba(248,81,73,0.75); }
     .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 48px; height: 48px; }
     .ctrl-btn:active { transform: scale(0.9); }
 
-    /* ── BOTTOM: input area (typer only) ── */
+    /* BOTTOM: input (typer) */
     #inputArea {
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      padding: 10px 12px 14px;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
+      background: var(--bg); border-top: 1px solid var(--border);
+      padding: 10px 12px 14px; display: none; gap: 8px; align-items: flex-end;
     }
-
-    #inputRow {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-    }
-
     #msgInput {
-      flex: 1;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 16px;
-      color: var(--text);
-      font-family: inherit;
-      resize: none;
-      outline: none;
-      min-height: 44px;
-      max-height: 100px;
+      flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px; font-size: 16px; color: var(--text);
+      font-family: inherit; resize: none; outline: none; min-height: 44px; max-height: 100px;
     }
     #msgInput:focus { border-color: var(--blue); }
-
     .send-btn {
       padding: 10px 16px; border-radius: 10px; border: none;
       background: linear-gradient(135deg, #388bfd, #1f6feb); color: #fff;
-      font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
-      white-space: nowrap; height: 44px;
+      font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; height: 44px;
     }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* Scroll controls (typer only) */
-    #scrollControls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    #scrollControls span { font-size: 11px; color: var(--muted); flex: 1; }
-    .scroll-btn {
-      padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
-      background: rgba(255,255,255,0.06); color: var(--text);
-      font-size: 13px; font-family: inherit; cursor: pointer;
-      transition: all 0.15s;
-    }
-    .scroll-btn:active { background: rgba(255,255,255,0.12); }
-
-    /* Font size control (viewer) */
-    #fontControl {
-      background: var(--bg); border-top: 1px solid var(--border);
-      padding: 10px 14px 14px; display: none; align-items: center; gap: 10px;
-    }
-    #fontControl span { font-size: 12px; color: var(--muted); }
-    #fontControl input[type=range] { flex: 1; accent-color: var(--blue); }
-    #fontLabel { font-size: 12px; color: var(--blue); min-width: 36px; text-align: right; }
 
     /* MODALS */
     .modal-bg {
@@ -306,14 +238,14 @@
 <div id="callScreen">
   <div id="callTop">
 
-    <!-- LEFT: vertical caption strip -->
+    <!-- LEFT: caption strip -->
     <div id="captionStrip">
       <div id="captionScroll">
         <div id="captionText">
-          <div id="captionPlaceholder">等待<br>訊息<br>⋯</div>
+          <div id="captionPlaceholder">等待<br>訊息<br>…</div>
         </div>
       </div>
-      <div id="scrollIndicator"><span id="scrollHint"></span></div>
+      <div id="dragHint">↕ 拖曳捲動</div>
     </div>
 
     <!-- RIGHT: video -->
@@ -325,9 +257,9 @@
         <p id="waitText">等待對方連線…</p>
       </div>
       <div id="vidControls">
-        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()" title="靜音">🎤</button>
-        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="關鏡頭">📷</button>
-        <button class="ctrl-btn end" onclick="endCall()" title="結束">📵</button>
+        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">🎤</button>
+        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">📷</button>
+        <button class="ctrl-btn end" onclick="endCall()">📵</button>
       </div>
     </div>
 
@@ -335,39 +267,149 @@
 
   <!-- BOTTOM: typer input -->
   <div id="inputArea">
-    <div id="inputRow">
-      <textarea id="msgInput" placeholder="輸入文字…" rows="1"></textarea>
-      <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送</button>
-    </div>
-    <div id="scrollControls">
-      <span id="scrollStatus">遠端捲動控制</span>
-      <button class="scroll-btn" onclick="remoteScroll('up')">▲ 往上</button>
-      <button class="scroll-btn" onclick="remoteScroll('down')">▼ 往下</button>
-    </div>
-  </div>
-
-  <!-- BOTTOM: viewer font control -->
-  <div id="fontControl">
-    <span>字</span>
-    <input type="range" min="20" max="48" value="28" id="fontSlider" oninput="updateFont(this.value)">
-    <span style="font-size:18px">字</span>
-    <span id="fontLabel">28px</span>
+    <textarea id="msgInput" placeholder="輸入文字…" rows="1"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送</button>
   </div>
 </div>
 
 <script>
   let peer, conn = null, call = null, localStream = null;
-  let captions = [], fontSize = 28, myPeerId = '';
+  let myPeerId = '', allText = '';
   let micOn = true, camOn = true;
-  let isTyper = false;
-  let allText = ''; // all text ever sent
+  let charFontSize = 32; // will be recalculated
 
   const params = new URLSearchParams(window.location.search);
   const joinId = params.get('join');
 
   window.addEventListener('load', () => {
     if (joinId) startAsViewer(joinId);
+    calcFontSize();
+    window.addEventListener('resize', calcFontSize);
   });
+
+  // Calculate font size to nearly fill 1/3 strip width
+  function calcFontSize() {
+    const stripW = window.innerWidth * 0.333;
+    // A Chinese character at font-size X px is approximately X * 1.0 wide
+    // We want it to fill ~85% of the strip
+    charFontSize = Math.floor(stripW * 0.82);
+    // Re-render if text exists
+    if (allText) renderText(allText);
+  }
+
+  // ── DRAG / SWIPE SCROLL ──
+  function initDragScroll(el) {
+    let startY = 0, startScroll = 0, isDragging = false;
+    let velY = 0, lastY = 0, lastT = 0, rafId = null;
+
+    function onStart(y) {
+      isDragging = true;
+      startY = y;
+      startScroll = el.scrollTop;
+      velY = 0;
+      lastY = y;
+      lastT = Date.now();
+      if (rafId) cancelAnimationFrame(rafId);
+    }
+    function onMove(y) {
+      if (!isDragging) return;
+      const dy = startY - y;
+      el.scrollTop = startScroll + dy;
+      const now = Date.now();
+      const dt = now - lastT || 1;
+      velY = (lastY - y) / dt * 16;
+      lastY = y;
+      lastT = now;
+    }
+    function onEnd() {
+      isDragging = false;
+      // momentum
+      function momentum() {
+        if (Math.abs(velY) < 0.5) return;
+        el.scrollTop += velY;
+        velY *= 0.92;
+        rafId = requestAnimationFrame(momentum);
+      }
+      momentum();
+    }
+
+    // Mouse
+    el.addEventListener('mousedown', e => { onStart(e.clientY); e.preventDefault(); });
+    window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientY); });
+    window.addEventListener('mouseup', () => onEnd());
+
+    // Touch
+    el.addEventListener('touchstart', e => { onStart(e.touches[0].clientY); }, { passive: true });
+    el.addEventListener('touchmove', e => { onMove(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+    el.addEventListener('touchend', () => onEnd());
+  }
+
+  // ── RENDER ──
+  function renderText(text) {
+    const container = document.getElementById('captionText');
+    const placeholder = document.getElementById('captionPlaceholder');
+    if (placeholder) placeholder.style.display = 'none';
+
+    container.querySelectorAll('.char-el, .char-space').forEach(el => el.remove());
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '\n') {
+        const sp = document.createElement('div');
+        sp.className = 'char-space';
+        sp.style.height = Math.round(charFontSize * 0.6) + 'px';
+        container.appendChild(sp);
+      } else {
+        const div = document.createElement('div');
+        div.className = 'char-el';
+        div.textContent = ch;
+        div.style.fontSize = charFontSize + 'px';
+        div.style.lineHeight = (charFontSize * 1.15) + 'px';
+        container.appendChild(div);
+      }
+    }
+  }
+
+  // ── REMOTE SCROLL SYNC ──
+  // Typer drags → sends scroll position to viewer
+  function initScrollSync(scrollEl) {
+    let ticking = false;
+    scrollEl.addEventListener('scroll', () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          if (conn && conn.open) {
+            const pct = scrollEl.scrollTop / (scrollEl.scrollHeight - scrollEl.clientHeight || 1);
+            conn.send({ type: 'scrollPct', pct });
+          }
+        });
+      }
+    });
+  }
+
+  function applyScrollPct(pct) {
+    const el = document.getElementById('captionScroll');
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    el.scrollTop = pct * maxScroll;
+  }
+
+  // ── MIC / CAM ──
+  function toggleMic() {
+    micOn = !micOn;
+    if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+    const btn = document.getElementById('micBtn');
+    btn.textContent = micOn ? '🎤' : '🔇';
+    btn.classList.toggle('off', !micOn);
+  }
+  function toggleCam() {
+    camOn = !camOn;
+    if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+    const btn = document.getElementById('camBtn');
+    btn.textContent = camOn ? '📷' : '🚫';
+    btn.classList.toggle('off', !camOn);
+    document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.3';
+  }
 
   function randId() { return 'fam-' + Math.random().toString(36).slice(2, 10); }
   function makeShareLink(id) { return window.location.origin + window.location.pathname + '?join=' + id; }
@@ -378,97 +420,20 @@
     };
   }
 
-  // ── RENDER VERTICAL TEXT ──
-  function renderText(text) {
-    const container = document.getElementById('captionText');
-    const placeholder = document.getElementById('captionPlaceholder');
-    if (placeholder) placeholder.style.display = 'none';
-
-    // Clear existing char blocks
-    container.querySelectorAll('.char-block').forEach(el => el.remove());
-
-    // Render each character as a block
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const div = document.createElement('div');
-      if (ch === '\n' || ch === ' ') {
-        div.className = 'char-block space';
-      } else {
-        div.className = 'char-block';
-        div.textContent = ch;
-        div.style.fontSize = fontSize + 'px';
-      }
-      container.appendChild(div);
-    }
-
-    updateScrollHint();
-  }
-
-  function updateScrollHint() {
-    const el = document.getElementById('captionScroll');
-    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const hint = document.getElementById('scrollHint');
-    if (remaining > 20) {
-      hint.textContent = '▼ 還有更多';
-    } else {
-      hint.textContent = '';
-    }
-  }
-
-  // ── SCROLL ──
-  function scrollCaption(direction) {
-    const el = document.getElementById('captionScroll');
-    const amount = el.clientHeight * 0.7;
-    el.scrollBy({ top: direction === 'down' ? amount : -amount, behavior: 'smooth' });
-    setTimeout(updateScrollHint, 400);
-  }
-
-  function remoteScroll(direction) {
-    // Scroll our own view
-    scrollCaption(direction);
-    // Send scroll command to viewer
-    if (conn && conn.open) {
-      conn.send({ type: 'scroll', direction });
-    }
-    // Update status
-    const status = document.getElementById('scrollStatus');
-    status.textContent = direction === 'down' ? '↓ 已向下捲動' : '↑ 已向上捲動';
-    setTimeout(() => { status.textContent = '遠端捲動控制'; }, 1500);
-  }
-
-  // ── MIC / CAM ──
-  function toggleMic() {
-    if (!localStream) return;
-    micOn = !micOn;
-    localStream.getAudioTracks().forEach(t => t.enabled = micOn);
-    const btn = document.getElementById('micBtn');
-    btn.textContent = micOn ? '🎤' : '🔇';
-    btn.classList.toggle('off', !micOn);
-  }
-
-  function toggleCam() {
-    if (!localStream) return;
-    camOn = !camOn;
-    localStream.getVideoTracks().forEach(t => t.enabled = camOn);
-    const btn = document.getElementById('camBtn');
-    btn.textContent = camOn ? '📷' : '🚫';
-    btn.classList.toggle('off', !camOn);
-    document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.3';
+  async function getMedia() {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById('localVideo').srcObject = localStream;
   }
 
   // ── TYPER ──
   async function startAsTyper() {
-    isTyper = true;
     document.getElementById('joinBtn').disabled = true;
     document.getElementById('status').textContent = '取得相機中…';
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      document.getElementById('localVideo').srcObject = localStream;
-    } catch(e) {
+    try { await getMedia(); }
+    catch(e) {
       document.getElementById('status').textContent = '無法取得相機，請確認權限';
       document.getElementById('status').className = 'err';
-      document.getElementById('joinBtn').disabled = false;
-      return;
+      document.getElementById('joinBtn').disabled = false; return;
     }
     myPeerId = randId();
     peer = new Peer(myPeerId, peerConfig());
@@ -478,6 +443,10 @@
       document.getElementById('callScreen').style.display = 'flex';
       document.getElementById('inputArea').style.display = 'flex';
 
+      const scrollEl = document.getElementById('captionScroll');
+      initDragScroll(scrollEl);
+      initScrollSync(scrollEl);  // sync scroll to viewer
+
       const link = makeShareLink(myPeerId);
       document.getElementById('shareLink').textContent = link;
       document.getElementById('shareModal').classList.add('show');
@@ -486,7 +455,6 @@
         conn = c;
         conn.on('open', () => {
           document.getElementById('sendBtn').disabled = false;
-          // Send existing text to new viewer
           if (allText) conn.send({ type: 'text', text: allText });
         });
       });
@@ -503,16 +471,11 @@
 
   // ── VIEWER ──
   async function startAsViewer(targetId) {
-    isTyper = false;
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('connectingScreen').style.display = 'flex';
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      document.getElementById('localVideo').srcObject = localStream;
-    } catch(e) {
-      document.getElementById('connectErr').textContent = '無法取得相機，請確認權限';
-      return;
-    }
+    try { await getMedia(); }
+    catch(e) { document.getElementById('connectErr').textContent = '無法取得相機，請確認權限'; return; }
+
     myPeerId = randId();
     peer = new Peer(myPeerId, peerConfig());
     peer.on('error', e => { document.getElementById('connectErr').textContent = '連線錯誤：' + e.type; });
@@ -520,11 +483,13 @@
       conn = peer.connect(targetId);
       conn.on('open', () => {
         conn.on('data', onData);
-        showViewerCallScreen();
+        document.getElementById('connectingScreen').style.display = 'none';
+        document.getElementById('callScreen').style.display = 'flex';
+        // Viewer can also drag to scroll locally
+        initDragScroll(document.getElementById('captionScroll'));
+        document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
       });
-      conn.on('error', () => {
-        document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話';
-      });
+      conn.on('error', () => { document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話'; });
       call = peer.call(targetId, localStream);
       call.on('stream', s => {
         document.getElementById('remoteVideo').srcObject = s;
@@ -533,20 +498,13 @@
     });
   }
 
-  function showViewerCallScreen() {
-    document.getElementById('connectingScreen').style.display = 'none';
-    document.getElementById('callScreen').style.display = 'flex';
-    document.getElementById('fontControl').style.display = 'flex';
-    document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
-  }
-
-  // ── RECEIVE DATA (viewer) ──
+  // ── RECEIVE DATA ──
   function onData(msg) {
     if (msg.type === 'text') {
       allText = msg.text;
       renderText(allText);
-    } else if (msg.type === 'scroll') {
-      scrollCaption(msg.direction);
+    } else if (msg.type === 'scrollPct') {
+      applyScrollPct(msg.pct);
     }
   }
 
@@ -555,35 +513,17 @@
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
     if (!text) return;
-
-    // Append to allText with newline separator
     if (allText.length > 0) allText += '\n';
     allText += text;
-
-    // Render locally
     renderText(allText);
-
-    // Scroll to bottom on our side
+    // Scroll to bottom
     setTimeout(() => {
       const el = document.getElementById('captionScroll');
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-      updateScrollHint();
     }, 50);
-
-    // Send full text to viewer (so they always have complete version)
-    if (conn && conn.open) {
-      conn.send({ type: 'text', text: allText });
-    }
-
+    if (conn && conn.open) conn.send({ type: 'text', text: allText });
     input.value = '';
     input.focus();
-  }
-
-  function updateFont(val) {
-    fontSize = parseInt(val);
-    document.getElementById('fontLabel').textContent = val + 'px';
-    // Re-render with new size
-    if (allText) renderText(allText);
   }
 
   function copyLink() {
@@ -603,15 +543,11 @@
     location.reload();
   }
 
-  // Enter to send
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && document.activeElement?.id === 'msgInput') {
       e.preventDefault(); sendMsg();
     }
   });
-
-  // Update scroll hint on manual scroll
-  document.addEventListener('scroll', () => updateScrollHint(), true);
 </script>
 </body>
 </html>
