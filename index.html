@@ -34,7 +34,6 @@
       border: 1px solid var(--border); border-radius: 16px; padding: 22px;
       display: flex; flex-direction: column; gap: 16px;
     }
-    .card label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
     .join-btn {
       width: 100%; padding: 14px; border-radius: 12px; border: none;
       background: linear-gradient(135deg, #2ea043, #26a641); color: #fff;
@@ -53,7 +52,7 @@
     }
     #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
     #localVideo {
-      position: absolute; bottom: 12px; right: 12px; width: 90px; height: 120px;
+      position: absolute; bottom: 70px; right: 12px; width: 90px; height: 120px;
       border-radius: 10px; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); background: #111;
     }
     #waitOverlay {
@@ -63,15 +62,26 @@
     }
     #waitOverlay .wi { font-size: 52px; }
     #waitOverlay p { font-size: 14px; text-align: center; line-height: 1.7; padding: 0 24px; }
-    #topBar {
-      position: absolute; top: 0; left: 0; right: 0; padding: 10px 12px;
-      display: flex; justify-content: flex-end; align-items: center; z-index: 10;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+
+    /* Controls bar */
+    #controls {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 10px 16px 12px;
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      z-index: 10;
     }
-    .end-btn {
-      background: rgba(248,81,73,0.85); border: none; border-radius: 20px;
-      padding: 6px 18px; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+    .ctrl-btn {
+      width: 50px; height: 50px; border-radius: 50%; border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; cursor: pointer; transition: all 0.18s;
+      background: rgba(255,255,255,0.15);
     }
+    .ctrl-btn.off { background: rgba(248,81,73,0.75); }
+    .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 56px; height: 56px; font-size: 24px; }
+    .ctrl-btn:active { transform: scale(0.92); }
+    .ctrl-label { font-size: 10px; color: rgba(255,255,255,0.55); text-align: center; margin-top: 3px; }
+    .ctrl-wrap { display: flex; flex-direction: column; align-items: center; }
 
     /* CAPTION AREA */
     #captionArea { background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -102,7 +112,7 @@
     }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* SHARE MODAL */
+    /* MODALS */
     .modal-bg {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
       align-items: center; justify-content: center; z-index: 100; padding: 24px;
@@ -131,7 +141,7 @@
       font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
     }
 
-    /* CONNECTING SCREEN (viewer auto-joining) */
+    /* CONNECTING SCREEN */
     #connectingScreen {
       display: none; height: 100vh; flex-direction: column;
       align-items: center; justify-content: center; gap: 20px; padding: 32px;
@@ -145,7 +155,7 @@
 </head>
 <body>
 
-<!-- LOBBY (typer only) -->
+<!-- LOBBY -->
 <div id="lobby">
   <div class="logo">
     <div class="logo-icon">📞</div>
@@ -162,11 +172,11 @@
   </div>
 </div>
 
-<!-- CONNECTING SCREEN (viewer waiting to connect) -->
+<!-- CONNECTING SCREEN -->
 <div id="connectingScreen">
   <div class="ci">📡</div>
   <h2>連線中…</h2>
-  <p>正在連接到對方，<br>請稍候。</p>
+  <p>正在連接到對方，請稍候。</p>
   <div id="connectErr" style="font-size:13px;color:#f85149;text-align:center;"></div>
 </div>
 
@@ -190,10 +200,24 @@
       <div class="wi">📡</div>
       <p id="waitText">等待外公連線…<br>把連結傳給外公後，<br>外公點開就會出現在這裡。</p>
     </div>
-    <div id="topBar">
-      <button class="end-btn" onclick="endCall()">結束通話</button>
+
+    <!-- Controls bar -->
+    <div id="controls">
+      <div class="ctrl-wrap">
+        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">🎤</button>
+        <div class="ctrl-label" id="micLabel">靜音</div>
+      </div>
+      <div class="ctrl-wrap">
+        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">📷</button>
+        <div class="ctrl-label" id="camLabel">關鏡頭</div>
+      </div>
+      <div class="ctrl-wrap">
+        <button class="ctrl-btn end" onclick="endCall()">📵</button>
+        <div class="ctrl-label">結束</div>
+      </div>
     </div>
   </div>
+
   <div id="captionArea">
     <div id="captionDisplay" style="display:none;">
       <div class="ph" id="ph">等待對方傳訊息…</div>
@@ -214,16 +238,12 @@
 <script>
   let peer, conn = null, call = null, localStream = null;
   let captions = [], fontSize = 54, myPeerId = '';
+  let micOn = true, camOn = true;
   const params = new URLSearchParams(window.location.search);
-  const joinId = params.get('join'); // set if viewer
+  const joinId = params.get('join');
 
-  // ── Boot ──
   window.addEventListener('load', () => {
-    if (joinId) {
-      // This is the VIEWER: auto-start
-      startAsViewer(joinId);
-    }
-    // else: typer sees lobby
+    if (joinId) startAsViewer(joinId);
   });
 
   function randId() {
@@ -234,13 +254,41 @@
     return window.location.origin + window.location.pathname + '?join=' + id;
   }
 
-  // ────────────────────────────────
-  // TYPER FLOW
-  // ────────────────────────────────
+  function peerConfig() {
+    return {
+      host: '0.peerjs.com', port: 443, path: '/', secure: true,
+      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+    };
+  }
+
+  // ── MIC / CAM TOGGLES ──
+  function toggleMic() {
+    if (!localStream) return;
+    micOn = !micOn;
+    localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+    const btn = document.getElementById('micBtn');
+    const lbl = document.getElementById('micLabel');
+    btn.textContent = micOn ? '🎤' : '🔇';
+    btn.classList.toggle('off', !micOn);
+    lbl.textContent = micOn ? '靜音' : '取消靜音';
+  }
+
+  function toggleCam() {
+    if (!localStream) return;
+    camOn = !camOn;
+    localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+    const btn = document.getElementById('camBtn');
+    const lbl = document.getElementById('camLabel');
+    btn.textContent = camOn ? '📷' : '🚫';
+    btn.classList.toggle('off', !camOn);
+    lbl.textContent = camOn ? '關鏡頭' : '開鏡頭';
+    document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.3';
+  }
+
+  // ── TYPER ──
   async function startAsTyper() {
     document.getElementById('joinBtn').disabled = true;
     document.getElementById('status').textContent = '取得相機中…';
-
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       document.getElementById('localVideo').srcObject = localStream;
@@ -250,30 +298,20 @@
       document.getElementById('joinBtn').disabled = false;
       return;
     }
-
     myPeerId = randId();
     peer = new Peer(myPeerId, peerConfig());
     peer.on('error', e => { document.getElementById('status').textContent = '錯誤：' + e.type; });
-
     peer.on('open', () => {
-      // Show call screen
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('callScreen').style.display = 'flex';
       document.getElementById('typerArea').style.display = 'flex';
-
-      // Show share modal with link
       const link = makeShareLink(myPeerId);
       document.getElementById('shareLink').textContent = link;
       document.getElementById('shareModal').classList.add('show');
-
-      // Wait for viewer
       peer.on('connection', c => {
         conn = c;
-        conn.on('open', () => {
-          document.getElementById('sendBtn').disabled = false;
-        });
+        conn.on('open', () => { document.getElementById('sendBtn').disabled = false; });
       });
-
       peer.on('call', incoming => {
         call = incoming;
         call.answer(localStream);
@@ -285,30 +323,21 @@
     });
   }
 
-  // ────────────────────────────────
-  // VIEWER FLOW
-  // ────────────────────────────────
+  // ── VIEWER ──
   async function startAsViewer(targetId) {
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('connectingScreen').style.display = 'flex';
-
-    // Get camera first
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('localVideo').srcObject = localStream;
     } catch(e) {
       document.getElementById('connectErr').textContent = '無法取得相機，請確認權限';
       return;
     }
-
     myPeerId = randId();
     peer = new Peer(myPeerId, peerConfig());
-
-    peer.on('error', e => {
-      document.getElementById('connectErr').textContent = '連線錯誤：' + e.type;
-    });
-
+    peer.on('error', e => { document.getElementById('connectErr').textContent = '連線錯誤：' + e.type; });
     peer.on('open', () => {
-      // Connect data channel
       conn = peer.connect(targetId);
       conn.on('open', () => {
         conn.on('data', onData);
@@ -317,8 +346,6 @@
       conn.on('error', () => {
         document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話';
       });
-
-      // Video call
       call = peer.call(targetId, localStream);
       call.on('stream', s => {
         document.getElementById('remoteVideo').srcObject = s;
@@ -338,16 +365,7 @@
     document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
   }
 
-  // ────────────────────────────────
-  // SHARED
-  // ────────────────────────────────
-  function peerConfig() {
-    return {
-      host: '0.peerjs.com', port: 443, path: '/', secure: true,
-      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    };
-  }
-
+  // ── CAPTIONS ──
   function onData(text) {
     document.getElementById('ph').style.display = 'none';
     captions.push(text);
@@ -369,43 +387,4 @@
   }
 
   function sendMsg() {
-    const input = document.getElementById('msgInput');
-    const text = input.value.trim();
-    if (!text || !conn) return;
-    conn.send(text);
-    input.value = '';
-    input.focus();
-  }
-
-  function updateFont(val) {
-    fontSize = parseInt(val);
-    document.getElementById('fontLabel').textContent = val + 'px';
-    if (captions.length) renderCaptions();
-  }
-
-  function copyLink() {
-    const link = document.getElementById('shareLink').textContent;
-    navigator.clipboard.writeText(link).catch(() => {});
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✓ 已複製！';
-    setTimeout(() => btn.textContent = '複製連結', 2000);
-  }
-
-  function endCall() {
-    if (call) { call.close(); call = null; }
-    if (conn) { conn.close(); conn = null; }
-    if (peer) { peer.destroy(); peer = null; }
-    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-    // Remove ?join= from URL without reload
-    window.history.replaceState({}, '', window.location.pathname);
-    location.reload();
-  }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey && document.activeElement?.id === 'msgInput') {
-      e.preventDefault(); sendMsg();
-    }
-  });
-</script>
-</body>
-</html>
+    const input = documen
