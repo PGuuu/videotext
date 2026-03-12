@@ -1,508 +1,411 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>家人通話</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
-  <script src="https://meet.jit.si/external_api.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --border: rgba(255,255,255,0.08);
-      --accent: #2ea043;
-      --accent2: #388bfd;
-      --text: #e6edf3;
-      --muted: rgba(230,237,243,0.45);
+      --bg: #0d1117; --surface: #161b22; --border: rgba(255,255,255,0.09);
+      --accent: #2ea043; --blue: #388bfd; --text: #e6edf3; --muted: rgba(230,237,243,0.4);
     }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Noto Sans TC', sans-serif;
-      overflow: hidden;
-    }
-
-    /* ── LOBBY ── */
+    /* LOBBY */
     #lobby {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 32px;
-      padding: 32px 24px;
-      background: radial-gradient(ellipse at 50% 0%, rgba(46,160,67,0.12) 0%, transparent 70%),
-                  var(--bg);
+      height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 28px; padding: 24px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(46,160,67,0.1) 0%, transparent 65%), var(--bg);
     }
-
-    .logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
+    .logo { text-align: center; }
     .logo-icon {
-      width: 72px; height: 72px;
-      border-radius: 20px;
+      width: 70px; height: 70px; border-radius: 20px; margin: 0 auto 12px;
       background: linear-gradient(135deg, #2ea043, #388bfd);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 36px;
-      box-shadow: 0 8px 32px rgba(46,160,67,0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 34px;
+      box-shadow: 0 8px 28px rgba(46,160,67,0.28);
     }
-
-    .logo h1 {
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: -0.5px;
-    }
-
-    .logo p {
-      font-size: 14px;
-      color: var(--muted);
-      text-align: center;
-    }
-
+    .logo h1 { font-size: 26px; font-weight: 900; }
+    .logo p { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .card {
-      width: 100%;
-      max-width: 380px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      width: 100%; max-width: 370px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 16px; padding: 22px;
+      display: flex; flex-direction: column; gap: 16px;
     }
-
-    .card label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 4px;
-      display: block;
-    }
-
-    .card input {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 16px;
-      color: var(--text);
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .card input:focus {
-      border-color: var(--accent2);
-    }
-
-    .role-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .role-btn {
-      flex: 1;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .role-btn.active {
-      border-color: var(--accent2);
-      color: var(--text);
-      background: rgba(56,139,253,0.1);
-    }
-
-    .role-btn .role-icon { font-size: 22px; display: block; margin-bottom: 4px; }
-
+    .card label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; }
     .join-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, #2ea043, #26a641);
-      color: #fff;
-      font-size: 17px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 20px rgba(46,160,67,0.35);
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #2ea043, #26a641); color: #fff;
+      font-size: 17px; font-weight: 700; font-family: inherit; cursor: pointer;
+      box-shadow: 0 4px 18px rgba(46,160,67,0.32);
     }
+    .join-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
+    #status.err { color: #f85149; }
 
-    .join-btn:active { transform: scale(0.98); }
-    .join-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* ── CALL SCREEN ── */
-    #callScreen {
-      display: none;
-      flex-direction: column;
-      height: 100vh;
-      height: 100dvh;
-    }
-
-    /* Video half */
+    /* CALL SCREEN */
+    #callScreen { display: none; flex-direction: column; height: 100vh; height: 100dvh; }
     #videoWrap {
-      flex: 1;
-      position: relative;
-      background: #000;
-      min-height: 0;
+      flex: 1; position: relative; background: #000; min-height: 0;
+      display: flex; align-items: center; justify-content: center;
     }
-
-    #jitsiContainer {
-      width: 100%;
-      height: 100%;
+    #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #localVideo {
+      position: absolute; bottom: 12px; right: 12px; width: 90px; height: 120px;
+      border-radius: 10px; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); background: #111;
     }
-
-    #jitsiContainer iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+    #waitOverlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px; color: var(--muted);
+      background: rgba(0,0,0,0.6);
     }
-
-    /* Caption half */
-    #captionArea {
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* VIEWER mode: big text display */
-    #captionDisplay {
-      flex: 1;
-      padding: 20px 20px 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      gap: 8px;
-      overflow: hidden;
-      min-height: 180px;
-    }
-
-    .caption-line {
-      line-height: 1.3;
-      transition: all 0.25s ease;
-    }
-
-    .caption-line.old {
-      color: var(--muted);
-    }
-
-    .caption-line.current {
-      color: #fff;
-      font-weight: 700;
-    }
-
-    /* TYPER mode: input */
-    #typerArea {
-      padding: 12px 16px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    #typerArea textarea {
-      width: 100%;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 18px;
-      color: var(--text);
-      font-family: inherit;
-      resize: none;
-      outline: none;
-      min-height: 80px;
-      transition: border-color 0.2s;
-    }
-
-    #typerArea textarea:focus { border-color: var(--accent2); }
-
-    .send-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, #388bfd, #1f6feb);
-      color: #fff;
-      font-size: 17px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(56,139,253,0.3);
-      transition: all 0.2s;
-    }
-
-    .send-btn:active { transform: scale(0.98); }
-
-    /* Font size control (viewer) */
-    #fontControl {
-      padding: 10px 16px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #fontControl span { font-size: 12px; color: var(--muted); }
-    #fontControl input[type=range] {
-      flex: 1;
-      accent-color: var(--accent2);
-    }
-    #fontLabel {
-      font-size: 12px;
-      color: var(--accent2);
-      min-width: 36px;
-      text-align: right;
-    }
-
-    /* Top bar */
+    #waitOverlay .wi { font-size: 52px; }
+    #waitOverlay p { font-size: 14px; text-align: center; line-height: 1.7; padding: 0 24px; }
     #topBar {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      padding: 10px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+      position: absolute; top: 0; left: 0; right: 0; padding: 10px 12px;
+      display: flex; justify-content: flex-end; align-items: center; z-index: 10;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
     }
-
-    .room-badge {
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.7);
-    }
-
     .end-btn {
-      background: rgba(239,68,68,0.8);
-      border: none;
-      border-radius: 20px;
-      padding: 6px 14px;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
+      background: rgba(248,81,73,0.85); border: none; border-radius: 20px;
+      padding: 6px 18px; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
     }
 
-    .placeholder-text {
-      color: rgba(255,255,255,0.18);
-      font-size: 18px;
-      text-align: center;
-      margin: auto;
-      line-height: 1.8;
+    /* CAPTION AREA */
+    #captionArea { background: var(--bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
+    #captionDisplay {
+      flex: 1; padding: 18px 18px 10px; display: flex; flex-direction: column;
+      justify-content: flex-end; gap: 6px; overflow: hidden; min-height: 160px;
     }
+    .caption-line { line-height: 1.35; transition: all 0.2s; }
+    .caption-line.old { color: var(--muted); }
+    .caption-line.cur { color: #fff; font-weight: 700; }
+    .ph { color: rgba(255,255,255,0.16); font-size: 17px; text-align: center; margin: auto; line-height: 1.9; }
+    #fontControl { padding: 8px 16px 14px; display: flex; align-items: center; gap: 10px; }
+    #fontControl span { font-size: 12px; color: var(--muted); }
+    #fontControl input[type=range] { flex: 1; accent-color: var(--blue); }
+    #fontLabel { font-size: 12px; color: var(--blue); min-width: 36px; text-align: right; }
+    #typerArea { padding: 12px 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+    #typerArea textarea {
+      width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 12px; padding: 13px; font-size: 17px; color: var(--text);
+      font-family: inherit; resize: none; outline: none; min-height: 78px;
+    }
+    #typerArea textarea:focus { border-color: var(--blue); }
+    .send-btn {
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #388bfd, #1f6feb); color: #fff;
+      font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(56,139,253,0.28);
+    }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* SHARE MODAL */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+      align-items: center; justify-content: center; z-index: 100; padding: 24px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px; width: 100%; max-width: 340px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .modal-card h2 { font-size: 18px; font-weight: 700; }
+    .modal-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .link-box {
+      background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px;
+      font-size: 13px; color: var(--blue); border: 1px solid var(--border);
+      word-break: break-all; line-height: 1.5;
+    }
+    .btn-blue {
+      width: 100%; padding: 13px; border-radius: 10px; border: none;
+      background: rgba(56,139,253,0.15); color: var(--blue);
+      font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
+    .btn-green {
+      width: 100%; padding: 13px; border-radius: 10px; border: none;
+      background: var(--accent); color: #fff;
+      font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+    }
+
+    /* CONNECTING SCREEN (viewer auto-joining) */
+    #connectingScreen {
+      display: none; height: 100vh; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px; padding: 32px;
+      background: var(--bg);
+    }
+    #connectingScreen .ci { font-size: 60px; animation: spin 2s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    #connectingScreen h2 { font-size: 20px; font-weight: 700; }
+    #connectingScreen p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
   </style>
 </head>
 <body>
 
-<!-- ══ LOBBY ══ -->
+<!-- LOBBY (typer only) -->
 <div id="lobby">
   <div class="logo">
     <div class="logo-icon">📞</div>
     <h1>家人通話</h1>
     <p>視訊通話 + 大字幕，讓溝通更輕鬆</p>
   </div>
-
   <div class="card">
-    <div>
-      <label>房間名稱（兩端要一樣）</label>
-      <input type="text" id="roomInput" placeholder="例如：我家" value="我家" />
-    </div>
-
-    <div>
-      <label>你的角色</label>
-      <div class="role-row">
-        <button class="role-btn active" id="roleTyper" onclick="setRole('typer')">
-          <span class="role-icon">⌨️</span>打字的人
-        </button>
-        <button class="role-btn" id="roleViewer" onclick="setRole('viewer')">
-          <span class="role-icon">👴</span>看字的人
-        </button>
-      </div>
-    </div>
-
-    <button class="join-btn" onclick="joinCall()">進入通話</button>
+    <p style="font-size:14px;color:var(--muted);line-height:1.7;">
+      按下「開始通話」，App 會產生一個連結。<br>
+      把連結傳給外公，外公點開就自動加入。
+    </p>
+    <div id="status"></div>
+    <button class="join-btn" id="joinBtn" onclick="startAsTyper()">開始通話</button>
   </div>
 </div>
 
-<!-- ══ CALL SCREEN ══ -->
+<!-- CONNECTING SCREEN (viewer waiting to connect) -->
+<div id="connectingScreen">
+  <div class="ci">📡</div>
+  <h2>連線中…</h2>
+  <p>正在連接到對方，<br>請稍候。</p>
+  <div id="connectErr" style="font-size:13px;color:#f85149;text-align:center;"></div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal-card">
+    <h2>📤 傳連結給外公</h2>
+    <p>用 LINE 把這個連結傳給外公，外公點開就會自動加入，不需要輸入任何東西。</p>
+    <div class="link-box" id="shareLink"></div>
+    <button class="btn-blue" id="copyBtn" onclick="copyLink()">複製連結</button>
+    <button class="btn-green" onclick="document.getElementById('shareModal').classList.remove('show')">好，等外公連線</button>
+  </div>
+</div>
+
+<!-- CALL SCREEN -->
 <div id="callScreen">
-  <!-- Video top half -->
   <div id="videoWrap">
-    <div id="jitsiContainer"></div>
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay playsinline muted></video>
+    <div id="waitOverlay">
+      <div class="wi">📡</div>
+      <p id="waitText">等待外公連線…<br>把連結傳給外公後，<br>外公點開就會出現在這裡。</p>
+    </div>
     <div id="topBar">
-      <span class="room-badge" id="roomBadge"></span>
       <button class="end-btn" onclick="endCall()">結束通話</button>
     </div>
   </div>
-
-  <!-- Caption bottom half -->
   <div id="captionArea">
-
-    <!-- VIEWER: big caption display -->
     <div id="captionDisplay" style="display:none;">
-      <div class="placeholder-text" id="captionPlaceholder">等待對方傳送訊息…</div>
+      <div class="ph" id="ph">等待對方傳訊息…</div>
     </div>
     <div id="fontControl" style="display:none;">
       <span>A</span>
-      <input type="range" min="28" max="88" value="52" id="fontSlider" oninput="updateFont(this.value)">
-      <span style="font-size:22px">A</span>
-      <span id="fontLabel">52px</span>
+      <input type="range" min="26" max="90" value="54" id="fontSlider" oninput="updateFont(this.value)">
+      <span style="font-size:20px">A</span>
+      <span id="fontLabel">54px</span>
     </div>
-
-    <!-- TYPER: text input -->
     <div id="typerArea" style="display:none;">
-      <textarea id="msgInput" placeholder="輸入要說的話，按傳送後對方會看到大字…" rows="3"></textarea>
-      <button class="send-btn" onclick="sendMessage()">傳送 ➤</button>
+      <textarea id="msgInput" placeholder="輸入要說的話…外公會看到大字" rows="3"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送 ➤</button>
     </div>
-
   </div>
 </div>
 
 <script>
-  let api = null;
-  let role = 'typer';
-  let captions = [];
-  let fontSize = 52;
+  let peer, conn = null, call = null, localStream = null;
+  let captions = [], fontSize = 54, myPeerId = '';
+  const params = new URLSearchParams(window.location.search);
+  const joinId = params.get('join'); // set if viewer
 
-  function setRole(r) {
-    role = r;
-    document.getElementById('roleTyper').classList.toggle('active', r === 'typer');
-    document.getElementById('roleViewer').classList.toggle('active', r === 'viewer');
-  }
-
-  function joinCall() {
-    const roomRaw = document.getElementById('roomInput').value.trim() || '家人通話';
-    // Jitsi room names must be URL-safe
-    const roomName = 'familycaption-' + encodeURIComponent(roomRaw).replace(/%/g, '').toLowerCase();
-
-    document.getElementById('lobby').style.display = 'none';
-    document.getElementById('callScreen').style.display = 'flex';
-    document.getElementById('roomBadge').textContent = '房間：' + roomRaw;
-
-    // Show correct UI for role
-    if (role === 'viewer') {
-      document.getElementById('captionDisplay').style.display = 'flex';
-      document.getElementById('fontControl').style.display = 'flex';
-    } else {
-      document.getElementById('typerArea').style.display = 'flex';
+  // ── Boot ──
+  window.addEventListener('load', () => {
+    if (joinId) {
+      // This is the VIEWER: auto-start
+      startAsViewer(joinId);
     }
-
-    // Init Jitsi
-    api = new JitsiMeetExternalAPI('meet.jit.si', {
-      roomName: roomName,
-      parentNode: document.getElementById('jitsiContainer'),
-      lang: 'zh',
-      configOverwrite: {
-        startWithAudioMuted: false,
-        startWithVideoUnmuted: true,
-        disableDeepLinking: true,
-        prejoinPageEnabled: false,
-        toolbarButtons: ['microphone', 'camera', 'hangup'],
-      },
-      interfaceConfigOverwrite: {
-        SHOW_JITSI_WATERMARK: false,
-        SHOW_BRAND_WATERMARK: false,
-        DEFAULT_REMOTE_DISPLAY_NAME: '家人',
-        TOOLBAR_ALWAYS_VISIBLE: false,
-        MOBILE_APP_PROMO: false,
-        filmStripOnly: false,
-      },
-    });
-
-    // Listen for incoming chat messages (used as caption channel)
-    api.addListener('incomingMessage', (event) => {
-      if (role === 'viewer') {
-        showCaption(event.message);
-      }
-    });
-  }
-
-  function sendMessage() {
-    const input = document.getElementById('msgInput');
-    const text = input.value.trim();
-    if (!text || !api) return;
-
-    api.executeCommand('sendChatMessage', text);
-    input.value = '';
-    input.focus();
-  }
-
-  // Allow Enter to send (Shift+Enter for newline)
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && role === 'typer') {
-      const active = document.activeElement;
-      if (active && active.id === 'msgInput') {
-        e.preventDefault();
-        sendMessage();
-      }
-    }
+    // else: typer sees lobby
   });
 
-  function showCaption(text) {
-    const placeholder = document.getElementById('captionPlaceholder');
-    if (placeholder) placeholder.style.display = 'none';
+  function randId() {
+    return 'fam-' + Math.random().toString(36).slice(2, 10);
+  }
 
+  function makeShareLink(id) {
+    return window.location.origin + window.location.pathname + '?join=' + id;
+  }
+
+  // ────────────────────────────────
+  // TYPER FLOW
+  // ────────────────────────────────
+  async function startAsTyper() {
+    document.getElementById('joinBtn').disabled = true;
+    document.getElementById('status').textContent = '取得相機中…';
+
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('localVideo').srcObject = localStream;
+    } catch(e) {
+      document.getElementById('status').textContent = '無法取得相機，請確認權限';
+      document.getElementById('status').className = 'err';
+      document.getElementById('joinBtn').disabled = false;
+      return;
+    }
+
+    myPeerId = randId();
+    peer = new Peer(myPeerId, peerConfig());
+    peer.on('error', e => { document.getElementById('status').textContent = '錯誤：' + e.type; });
+
+    peer.on('open', () => {
+      // Show call screen
+      document.getElementById('lobby').style.display = 'none';
+      document.getElementById('callScreen').style.display = 'flex';
+      document.getElementById('typerArea').style.display = 'flex';
+
+      // Show share modal with link
+      const link = makeShareLink(myPeerId);
+      document.getElementById('shareLink').textContent = link;
+      document.getElementById('shareModal').classList.add('show');
+
+      // Wait for viewer
+      peer.on('connection', c => {
+        conn = c;
+        conn.on('open', () => {
+          document.getElementById('sendBtn').disabled = false;
+        });
+      });
+
+      peer.on('call', incoming => {
+        call = incoming;
+        call.answer(localStream);
+        call.on('stream', s => {
+          document.getElementById('remoteVideo').srcObject = s;
+          document.getElementById('waitOverlay').style.display = 'none';
+        });
+      });
+    });
+  }
+
+  // ────────────────────────────────
+  // VIEWER FLOW
+  // ────────────────────────────────
+  async function startAsViewer(targetId) {
+    document.getElementById('lobby').style.display = 'none';
+    document.getElementById('connectingScreen').style.display = 'flex';
+
+    // Get camera first
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch(e) {
+      document.getElementById('connectErr').textContent = '無法取得相機，請確認權限';
+      return;
+    }
+
+    myPeerId = randId();
+    peer = new Peer(myPeerId, peerConfig());
+
+    peer.on('error', e => {
+      document.getElementById('connectErr').textContent = '連線錯誤：' + e.type;
+    });
+
+    peer.on('open', () => {
+      // Connect data channel
+      conn = peer.connect(targetId);
+      conn.on('open', () => {
+        conn.on('data', onData);
+        showViewerCallScreen();
+      });
+      conn.on('error', () => {
+        document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話';
+      });
+
+      // Video call
+      call = peer.call(targetId, localStream);
+      call.on('stream', s => {
+        document.getElementById('remoteVideo').srcObject = s;
+        document.getElementById('waitOverlay').style.display = 'none';
+      });
+      call.on('error', () => {
+        document.getElementById('connectErr').textContent = '視訊連線失敗';
+      });
+    });
+  }
+
+  function showViewerCallScreen() {
+    document.getElementById('connectingScreen').style.display = 'none';
+    document.getElementById('callScreen').style.display = 'flex';
+    document.getElementById('captionDisplay').style.display = 'flex';
+    document.getElementById('fontControl').style.display = 'flex';
+    document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
+  }
+
+  // ────────────────────────────────
+  // SHARED
+  // ────────────────────────────────
+  function peerConfig() {
+    return {
+      host: '0.peerjs.com', port: 443, path: '/', secure: true,
+      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+    };
+  }
+
+  function onData(text) {
+    document.getElementById('ph').style.display = 'none';
     captions.push(text);
     if (captions.length > 3) captions = captions.slice(-3);
+    renderCaptions();
+  }
 
+  function renderCaptions() {
     const display = document.getElementById('captionDisplay');
-    display.innerHTML = '';
-
+    display.querySelectorAll('.caption-line').forEach(el => el.remove());
     captions.forEach((line, i) => {
+      const isCur = i === captions.length - 1;
       const div = document.createElement('div');
-      div.className = 'caption-line ' + (i === captions.length - 1 ? 'current' : 'old');
-      div.style.fontSize = i === captions.length - 1
-        ? fontSize + 'px'
-        : Math.max(fontSize - 18, 20) + 'px';
+      div.className = 'caption-line ' + (isCur ? 'cur' : 'old');
+      div.style.fontSize = (isCur ? fontSize : Math.max(fontSize - 16, 18)) + 'px';
       div.textContent = line;
       display.appendChild(div);
     });
   }
 
+  function sendMsg() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text || !conn) return;
+    conn.send(text);
+    input.value = '';
+    input.focus();
+  }
+
   function updateFont(val) {
     fontSize = parseInt(val);
     document.getElementById('fontLabel').textContent = val + 'px';
-    // Re-render captions with new size
-    if (captions.length > 0) showCaption(captions[captions.length - 1]);
+    if (captions.length) renderCaptions();
+  }
+
+  function copyLink() {
+    const link = document.getElementById('shareLink').textContent;
+    navigator.clipboard.writeText(link).catch(() => {});
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 已複製！';
+    setTimeout(() => btn.textContent = '複製連結', 2000);
   }
 
   function endCall() {
-    if (api) {
-      api.executeCommand('hangup');
-      api.dispose();
-      api = null;
-    }
-    captions = [];
-    document.getElementById('callScreen').style.display = 'none';
-    document.getElementById('captionDisplay').innerHTML = '';
-    document.getElementById('captionDisplay').style.display = 'none';
-    document.getElementById('fontControl').style.display = 'none';
-    document.getElementById('typerArea').style.display = 'none';
-    document.getElementById('lobby').style.display = 'flex';
+    if (call) { call.close(); call = null; }
+    if (conn) { conn.close(); conn = null; }
+    if (peer) { peer.destroy(); peer = null; }
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    // Remove ?join= from URL without reload
+    window.history.replaceState({}, '', window.location.pathname);
+    location.reload();
   }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && document.activeElement?.id === 'msgInput') {
+      e.preventDefault(); sendMsg();
+    }
+  });
 </script>
 </body>
 </html>
