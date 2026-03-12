@@ -60,79 +60,37 @@
 
     /* LEFT: caption strip */
     #captionStrip {
-      width: 33.333%;
-      background: #080b10;
+      width: 33.333%; background: #080b10;
       border-right: 1px solid rgba(255,255,255,0.08);
-      position: relative;
-      overflow: hidden;
-      cursor: grab;
-      user-select: none;
-      touch-action: none;
+      position: relative; overflow: hidden; cursor: grab; user-select: none; touch-action: none;
     }
     #captionStrip:active { cursor: grabbing; }
-
     #captionScroll {
-      height: 100%;
-      overflow-y: scroll;
-      overflow-x: hidden;
-      scrollbar-width: none;
-      touch-action: none;
+      height: 100%; overflow-y: scroll; overflow-x: hidden;
+      scrollbar-width: none; touch-action: none;
     }
     #captionScroll::-webkit-scrollbar { display: none; }
-
     #captionText {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px 0 60px;
+      display: flex; flex-direction: column; align-items: center; padding: 20px 0 60px;
     }
-
     .char-el {
-      font-weight: 900;
-      line-height: 1.15;
-      text-align: center;
-      color: #fff;
-      width: 100%;
+      font-weight: 900; line-height: 1.15; text-align: center; color: #fff; width: 100%;
       transition: background 0.15s, color 0.15s;
     }
-
-    /* Highlight = what viewer currently sees */
-    .char-el.in-view {
-      background: rgba(56,139,253,0.25);
-      color: #93c5fd;
-    }
-    /* Top/bottom boundary markers */
-    .char-el.view-top {
-      background: rgba(56,139,253,0.35);
-      color: #60a5fa;
-      border-top: 2px solid #388bfd;
-    }
-    .char-el.view-bottom {
-      background: rgba(56,139,253,0.35);
-      color: #60a5fa;
-      border-bottom: 2px solid #388bfd;
-    }
-
+    .char-el.in-view { background: rgba(56,139,253,0.25); color: #93c5fd; }
+    .char-el.view-top { background: rgba(56,139,253,0.35); color: #60a5fa; border-top: 2px solid #388bfd; }
+    .char-el.view-bottom { background: rgba(56,139,253,0.35); color: #60a5fa; border-bottom: 2px solid #388bfd; }
     .char-space { width: 100%; }
-
-    /* fade top/bottom */
     #captionStrip::before, #captionStrip::after {
       content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
     }
     #captionStrip::before { top: 0; height: 28px; background: linear-gradient(to bottom, #080b10, transparent); }
     #captionStrip::after  { bottom: 0; height: 48px; background: linear-gradient(to top, #080b10, transparent); }
-
-    /* Legend (typer only) */
     #viewLegend {
       position: absolute; bottom: 8px; left: 0; right: 0;
       text-align: center; font-size: 10px; z-index: 3; pointer-events: none;
+      color: rgba(255,255,255,0.25);
     }
-    #viewLegendText { color: rgba(255,255,255,0.25); }
-    #viewLegendHighlight {
-      display: inline-block; width: 8px; height: 8px; border-radius: 2px;
-      background: rgba(56,139,253,0.4); vertical-align: middle; margin-right: 3px;
-    }
-
     #captionPlaceholder {
       color: rgba(255,255,255,0.12); font-size: 13px;
       text-align: center; padding: 24px 8px; line-height: 2.2; width: 100%;
@@ -142,9 +100,8 @@
     #videoWrap { flex: 1; position: relative; background: #000; overflow: hidden; }
     #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
     #localVideo {
-      position: absolute; bottom: 58px; right: 8px;
-      width: 72px; height: 96px; border-radius: 8px;
-      object-fit: cover; border: 2px solid rgba(255,255,255,0.18); background: #111;
+      position: absolute; bottom: 58px; right: 8px; width: 72px; height: 96px;
+      border-radius: 8px; object-fit: cover; border: 2px solid rgba(255,255,255,0.18); background: #111;
     }
     #waitOverlay {
       position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -167,7 +124,7 @@
     .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 48px; height: 48px; }
     .ctrl-btn:active { transform: scale(0.9); }
 
-    /* BOTTOM: input (typer) */
+    /* BOTTOM: input */
     #inputArea {
       background: var(--bg); border-top: 1px solid var(--border);
       padding: 10px 12px 14px; display: none; gap: 8px; align-items: flex-end;
@@ -256,22 +213,14 @@
 <!-- CALL SCREEN -->
 <div id="callScreen">
   <div id="callTop">
-
-    <!-- LEFT: caption strip -->
     <div id="captionStrip">
       <div id="captionScroll">
         <div id="captionText">
           <div id="captionPlaceholder">等待<br>訊息<br>…</div>
         </div>
       </div>
-      <!-- Legend shown only to typer -->
-      <div id="viewLegend" style="display:none;">
-        <span id="viewLegendHighlight"></span>
-        <span id="viewLegendText">外公目前看到的字</span>
-      </div>
+      <div id="viewLegend" style="display:none;">▣ 藍色 = 外公目前看到的字</div>
     </div>
-
-    <!-- RIGHT: video -->
     <div id="videoWrap">
       <video id="remoteVideo" autoplay playsinline></video>
       <video id="localVideo" autoplay playsinline muted></video>
@@ -285,10 +234,7 @@
         <button class="ctrl-btn end" onclick="endCall()">📵</button>
       </div>
     </div>
-
   </div>
-
-  <!-- BOTTOM: typer input -->
   <div id="inputArea">
     <textarea id="msgInput" placeholder="輸入文字…" rows="1"></textarea>
     <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送</button>
@@ -299,7 +245,6 @@
   let peer, conn = null, call = null, localStream = null;
   let myPeerId = '', allText = '', charFontSize = 32;
   let micOn = true, camOn = true, isTyper = false;
-  // charElements[i] corresponds to allText[i] (excluding \n which are spacers)
   let charElements = [];
 
   const params = new URLSearchParams(window.location.search);
@@ -315,6 +260,36 @@
     charFontSize = Math.floor(window.innerWidth * 0.333 * 0.82);
   }
 
+  // ── ICE CONFIG with STUN + multiple free TURN servers ──
+  function peerConfig() {
+    return {
+      host: '0.peerjs.com', port: 443, path: '/', secure: true,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          // Free TURN from Open Relay Project (no signup needed)
+          {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          }
+        ],
+        iceCandidatePoolSize: 10
+      }
+    };
+  }
+
   // ── RENDER ──
   function renderText(text) {
     const container = document.getElementById('captionText');
@@ -322,7 +297,6 @@
     if (placeholder) placeholder.style.display = 'none';
     container.querySelectorAll('.char-el, .char-space').forEach(el => el.remove());
     charElements = [];
-
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
       if (ch === '\n') {
@@ -330,7 +304,7 @@
         sp.className = 'char-space';
         sp.style.height = Math.round(charFontSize * 0.5) + 'px';
         container.appendChild(sp);
-        charElements.push(null); // placeholder for \n
+        charElements.push(null);
       } else {
         const div = document.createElement('div');
         div.className = 'char-el';
@@ -343,19 +317,15 @@
     }
   }
 
-  // ── VIEWPORT REPORTING (viewer → typer) ──
-  // Viewer reports which char indices are visible on screen
+  // ── VIEWPORT ──
   function getVisibleCharRange() {
     const scrollEl = document.getElementById('captionScroll');
-    const top = scrollEl.scrollTop;
-    const bottom = top + scrollEl.clientHeight;
+    const top = scrollEl.scrollTop, bottom = top + scrollEl.clientHeight;
     let first = -1, last = -1;
-
     for (let i = 0; i < charElements.length; i++) {
       const el = charElements[i];
       if (!el) continue;
-      const elTop = el.offsetTop;
-      const elBottom = elTop + el.offsetHeight;
+      const elTop = el.offsetTop, elBottom = elTop + el.offsetHeight;
       if (elBottom > top && elTop < bottom) {
         if (first === -1) first = i;
         last = i;
@@ -364,27 +334,24 @@
     return { first, last };
   }
 
-  let viewportReportTimer = null;
+  let viewportTimer = null;
   function scheduleViewportReport() {
-    if (viewportReportTimer) return;
-    viewportReportTimer = setTimeout(() => {
-      viewportReportTimer = null;
+    if (viewportTimer) return;
+    viewportTimer = setTimeout(() => {
+      viewportTimer = null;
       if (conn && conn.open) {
-        const range = getVisibleCharRange();
-        conn.send({ type: 'viewport', first: range.first, last: range.last });
+        const r = getVisibleCharRange();
+        conn.send({ type: 'viewport', first: r.first, last: r.last });
       }
     }, 80);
   }
 
-  // ── HIGHLIGHT VIEWER'S VIEW (typer side) ──
   function applyViewportHighlight(first, last) {
-    // Clear all highlights
     charElements.forEach(el => {
       if (!el) return;
       el.classList.remove('in-view', 'view-top', 'view-bottom');
     });
     if (first === -1 || last === -1) return;
-
     for (let i = 0; i < charElements.length; i++) {
       const el = charElements[i];
       if (!el) continue;
@@ -394,28 +361,22 @@
         if (i === last) el.classList.add('view-bottom');
       }
     }
-
-    // Auto-scroll typer's strip to keep highlight visible
+    // Auto-scroll typer to keep highlight visible
     const firstEl = charElements[first];
-    const lastEl = charElements[last];
-    if (firstEl && lastEl) {
+    if (firstEl) {
       const scrollEl = document.getElementById('captionScroll');
       const stripTop = scrollEl.scrollTop;
       const stripBottom = stripTop + scrollEl.clientHeight;
-      const elTop = firstEl.offsetTop;
-      const elBottom = lastEl.offsetTop + lastEl.offsetHeight;
-      // If highlight is mostly out of view, scroll to it
-      if (elTop < stripTop || elBottom > stripBottom) {
-        scrollEl.scrollTo({ top: elTop - 40, behavior: 'smooth' });
+      if (firstEl.offsetTop < stripTop || firstEl.offsetTop > stripBottom) {
+        scrollEl.scrollTo({ top: firstEl.offsetTop - 40, behavior: 'smooth' });
       }
     }
   }
 
-  // ── DRAG / SWIPE SCROLL ──
-  function initDragScroll(el, onScrollCallback) {
+  // ── DRAG/SWIPE SCROLL ──
+  function initDragScroll(el, onScrollCb) {
     let startY = 0, startScroll = 0, isDragging = false;
     let velY = 0, lastY = 0, lastT = 0, rafId = null;
-
     function onStart(y) {
       isDragging = true; startY = y; startScroll = el.scrollTop;
       velY = 0; lastY = y; lastT = Date.now();
@@ -424,21 +385,20 @@
     function onMove(y) {
       if (!isDragging) return;
       el.scrollTop = startScroll + (startY - y);
-      const now = Date.now(); const dt = now - lastT || 1;
+      const now = Date.now(), dt = now - lastT || 1;
       velY = (lastY - y) / dt * 16; lastY = y; lastT = now;
-      if (onScrollCallback) onScrollCallback();
+      if (onScrollCb) onScrollCb();
     }
     function onEnd() {
       isDragging = false;
       function momentum() {
         if (Math.abs(velY) < 0.5) return;
         el.scrollTop += velY; velY *= 0.92;
-        if (onScrollCallback) onScrollCallback();
+        if (onScrollCb) onScrollCb();
         rafId = requestAnimationFrame(momentum);
       }
       momentum();
     }
-
     el.addEventListener('mousedown', e => { onStart(e.clientY); e.preventDefault(); });
     window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientY); });
     window.addEventListener('mouseup', () => onEnd());
@@ -464,12 +424,7 @@
 
   function randId() { return 'fam-' + Math.random().toString(36).slice(2, 10); }
   function makeShareLink(id) { return window.location.origin + window.location.pathname + '?join=' + id; }
-  function peerConfig() {
-    return {
-      host: '0.peerjs.com', port: 443, path: '/', secure: true,
-      config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    };
-  }
+
   async function getMedia() {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     document.getElementById('localVideo').srcObject = localStream;
@@ -495,7 +450,6 @@
       document.getElementById('inputArea').style.display = 'flex';
       document.getElementById('viewLegend').style.display = 'block';
 
-      // Typer drag → sync scroll position to viewer
       initDragScroll(document.getElementById('captionScroll'), () => {
         if (conn && conn.open) {
           const el = document.getElementById('captionScroll');
@@ -504,8 +458,7 @@
         }
       });
 
-      const link = makeShareLink(myPeerId);
-      document.getElementById('shareLink').textContent = link;
+      document.getElementById('shareLink').textContent = makeShareLink(myPeerId);
       document.getElementById('shareModal').classList.add('show');
 
       peer.on('connection', c => {
@@ -515,10 +468,7 @@
           if (allText) conn.send({ type: 'text', text: allText });
         });
         conn.on('data', msg => {
-          // Receive viewport info from viewer
-          if (msg.type === 'viewport') {
-            applyViewportHighlight(msg.first, msg.last);
-          }
+          if (msg.type === 'viewport') applyViewportHighlight(msg.first, msg.last);
         });
       });
       peer.on('call', incoming => {
@@ -548,10 +498,7 @@
         conn.on('data', onData);
         document.getElementById('connectingScreen').style.display = 'none';
         document.getElementById('callScreen').style.display = 'flex';
-
-        // Viewer drag → report viewport back to typer
         initDragScroll(document.getElementById('captionScroll'), scheduleViewportReport);
-
         document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
       });
       conn.on('error', () => { document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話'; });
@@ -563,22 +510,18 @@
     });
   }
 
-  // ── RECEIVE DATA ──
+  // ── DATA ──
   function onData(msg) {
     if (msg.type === 'text') {
-      allText = msg.text;
-      renderText(allText);
-      // Report current viewport after render
+      allText = msg.text; renderText(allText);
       setTimeout(scheduleViewportReport, 100);
     } else if (msg.type === 'scrollPct') {
-      // Typer scrolled → move viewer
       const el = document.getElementById('captionScroll');
       el.scrollTop = msg.pct * (el.scrollHeight - el.clientHeight);
       setTimeout(scheduleViewportReport, 100);
     }
   }
 
-  // ── SEND ──
   function sendMsg() {
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
