@@ -12,7 +12,7 @@
       --bg: #0d1117; --surface: #161b22; --border: rgba(255,255,255,0.09);
       --accent: #2ea043; --blue: #388bfd; --text: #e6edf3; --muted: rgba(230,237,243,0.4);
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; touch-action: none; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
 
     /* LOBBY */
     #lobby {
@@ -56,10 +56,9 @@
 
     /* CALL SCREEN */
     #callScreen { display: none; height: 100vh; height: 100dvh; flex-direction: column; }
-
     #callTop { flex: 1; display: flex; min-height: 0; }
 
-    /* LEFT: caption strip — 1/3 width */
+    /* LEFT: caption strip */
     #captionStrip {
       width: 33.333%;
       background: #080b10;
@@ -68,6 +67,7 @@
       overflow: hidden;
       cursor: grab;
       user-select: none;
+      touch-action: none;
     }
     #captionStrip:active { cursor: grabbing; }
 
@@ -76,7 +76,6 @@
       overflow-y: scroll;
       overflow-x: hidden;
       scrollbar-width: none;
-      /* disable native touch scroll — we handle it ourselves */
       touch-action: none;
     }
     #captionScroll::-webkit-scrollbar { display: none; }
@@ -85,38 +84,58 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px 0 40px;
-      gap: 0;
+      padding: 20px 0 60px;
     }
 
     .char-el {
-      /* Font size set dynamically to nearly fill strip width */
       font-weight: 900;
       line-height: 1.15;
       text-align: center;
       color: #fff;
       width: 100%;
+      transition: background 0.15s, color 0.15s;
     }
-    .char-space { height: 1em; width: 100%; }
 
-    /* fade overlay top/bottom */
+    /* Highlight = what viewer currently sees */
+    .char-el.in-view {
+      background: rgba(56,139,253,0.25);
+      color: #93c5fd;
+    }
+    /* Top/bottom boundary markers */
+    .char-el.view-top {
+      background: rgba(56,139,253,0.35);
+      color: #60a5fa;
+      border-top: 2px solid #388bfd;
+    }
+    .char-el.view-bottom {
+      background: rgba(56,139,253,0.35);
+      color: #60a5fa;
+      border-bottom: 2px solid #388bfd;
+    }
+
+    .char-space { width: 100%; }
+
+    /* fade top/bottom */
     #captionStrip::before, #captionStrip::after {
       content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
     }
-    #captionStrip::before { top: 0; height: 32px; background: linear-gradient(to bottom, #080b10, transparent); }
+    #captionStrip::before { top: 0; height: 28px; background: linear-gradient(to bottom, #080b10, transparent); }
     #captionStrip::after  { bottom: 0; height: 48px; background: linear-gradient(to top, #080b10, transparent); }
 
-    /* drag hint */
-    #dragHint {
+    /* Legend (typer only) */
+    #viewLegend {
       position: absolute; bottom: 8px; left: 0; right: 0;
-      text-align: center; font-size: 10px; color: rgba(255,255,255,0.2);
-      pointer-events: none; z-index: 3;
+      text-align: center; font-size: 10px; z-index: 3; pointer-events: none;
+    }
+    #viewLegendText { color: rgba(255,255,255,0.25); }
+    #viewLegendHighlight {
+      display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+      background: rgba(56,139,253,0.4); vertical-align: middle; margin-right: 3px;
     }
 
-    /* placeholder */
     #captionPlaceholder {
       color: rgba(255,255,255,0.12); font-size: 13px;
-      text-align: center; padding: 24px 8px; line-height: 2.2;
+      text-align: center; padding: 24px 8px; line-height: 2.2; width: 100%;
     }
 
     /* RIGHT: video */
@@ -245,7 +264,11 @@
           <div id="captionPlaceholder">等待<br>訊息<br>…</div>
         </div>
       </div>
-      <div id="dragHint">↕ 拖曳捲動</div>
+      <!-- Legend shown only to typer -->
+      <div id="viewLegend" style="display:none;">
+        <span id="viewLegendHighlight"></span>
+        <span id="viewLegendText">外公目前看到的字</span>
+      </div>
     </div>
 
     <!-- RIGHT: video -->
@@ -274,9 +297,10 @@
 
 <script>
   let peer, conn = null, call = null, localStream = null;
-  let myPeerId = '', allText = '';
-  let micOn = true, camOn = true;
-  let charFontSize = 32; // will be recalculated
+  let myPeerId = '', allText = '', charFontSize = 32;
+  let micOn = true, camOn = true, isTyper = false;
+  // charElements[i] corresponds to allText[i] (excluding \n which are spacers)
+  let charElements = [];
 
   const params = new URLSearchParams(window.location.search);
   const joinId = params.get('join');
@@ -284,64 +308,11 @@
   window.addEventListener('load', () => {
     if (joinId) startAsViewer(joinId);
     calcFontSize();
-    window.addEventListener('resize', calcFontSize);
+    window.addEventListener('resize', () => { calcFontSize(); if (allText) renderText(allText); });
   });
 
-  // Calculate font size to nearly fill 1/3 strip width
   function calcFontSize() {
-    const stripW = window.innerWidth * 0.333;
-    // A Chinese character at font-size X px is approximately X * 1.0 wide
-    // We want it to fill ~85% of the strip
-    charFontSize = Math.floor(stripW * 0.82);
-    // Re-render if text exists
-    if (allText) renderText(allText);
-  }
-
-  // ── DRAG / SWIPE SCROLL ──
-  function initDragScroll(el) {
-    let startY = 0, startScroll = 0, isDragging = false;
-    let velY = 0, lastY = 0, lastT = 0, rafId = null;
-
-    function onStart(y) {
-      isDragging = true;
-      startY = y;
-      startScroll = el.scrollTop;
-      velY = 0;
-      lastY = y;
-      lastT = Date.now();
-      if (rafId) cancelAnimationFrame(rafId);
-    }
-    function onMove(y) {
-      if (!isDragging) return;
-      const dy = startY - y;
-      el.scrollTop = startScroll + dy;
-      const now = Date.now();
-      const dt = now - lastT || 1;
-      velY = (lastY - y) / dt * 16;
-      lastY = y;
-      lastT = now;
-    }
-    function onEnd() {
-      isDragging = false;
-      // momentum
-      function momentum() {
-        if (Math.abs(velY) < 0.5) return;
-        el.scrollTop += velY;
-        velY *= 0.92;
-        rafId = requestAnimationFrame(momentum);
-      }
-      momentum();
-    }
-
-    // Mouse
-    el.addEventListener('mousedown', e => { onStart(e.clientY); e.preventDefault(); });
-    window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientY); });
-    window.addEventListener('mouseup', () => onEnd());
-
-    // Touch
-    el.addEventListener('touchstart', e => { onStart(e.touches[0].clientY); }, { passive: true });
-    el.addEventListener('touchmove', e => { onMove(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
-    el.addEventListener('touchend', () => onEnd());
+    charFontSize = Math.floor(window.innerWidth * 0.333 * 0.82);
   }
 
   // ── RENDER ──
@@ -349,16 +320,17 @@
     const container = document.getElementById('captionText');
     const placeholder = document.getElementById('captionPlaceholder');
     if (placeholder) placeholder.style.display = 'none';
-
     container.querySelectorAll('.char-el, .char-space').forEach(el => el.remove());
+    charElements = [];
 
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
       if (ch === '\n') {
         const sp = document.createElement('div');
         sp.className = 'char-space';
-        sp.style.height = Math.round(charFontSize * 0.6) + 'px';
+        sp.style.height = Math.round(charFontSize * 0.5) + 'px';
         container.appendChild(sp);
+        charElements.push(null); // placeholder for \n
       } else {
         const div = document.createElement('div');
         div.className = 'char-el';
@@ -366,32 +338,113 @@
         div.style.fontSize = charFontSize + 'px';
         div.style.lineHeight = (charFontSize * 1.15) + 'px';
         container.appendChild(div);
+        charElements.push(div);
       }
     }
   }
 
-  // ── REMOTE SCROLL SYNC ──
-  // Typer drags → sends scroll position to viewer
-  function initScrollSync(scrollEl) {
-    let ticking = false;
-    scrollEl.addEventListener('scroll', () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(() => {
-          ticking = false;
-          if (conn && conn.open) {
-            const pct = scrollEl.scrollTop / (scrollEl.scrollHeight - scrollEl.clientHeight || 1);
-            conn.send({ type: 'scrollPct', pct });
-          }
-        });
+  // ── VIEWPORT REPORTING (viewer → typer) ──
+  // Viewer reports which char indices are visible on screen
+  function getVisibleCharRange() {
+    const scrollEl = document.getElementById('captionScroll');
+    const top = scrollEl.scrollTop;
+    const bottom = top + scrollEl.clientHeight;
+    let first = -1, last = -1;
+
+    for (let i = 0; i < charElements.length; i++) {
+      const el = charElements[i];
+      if (!el) continue;
+      const elTop = el.offsetTop;
+      const elBottom = elTop + el.offsetHeight;
+      if (elBottom > top && elTop < bottom) {
+        if (first === -1) first = i;
+        last = i;
       }
-    });
+    }
+    return { first, last };
   }
 
-  function applyScrollPct(pct) {
-    const el = document.getElementById('captionScroll');
-    const maxScroll = el.scrollHeight - el.clientHeight;
-    el.scrollTop = pct * maxScroll;
+  let viewportReportTimer = null;
+  function scheduleViewportReport() {
+    if (viewportReportTimer) return;
+    viewportReportTimer = setTimeout(() => {
+      viewportReportTimer = null;
+      if (conn && conn.open) {
+        const range = getVisibleCharRange();
+        conn.send({ type: 'viewport', first: range.first, last: range.last });
+      }
+    }, 80);
+  }
+
+  // ── HIGHLIGHT VIEWER'S VIEW (typer side) ──
+  function applyViewportHighlight(first, last) {
+    // Clear all highlights
+    charElements.forEach(el => {
+      if (!el) return;
+      el.classList.remove('in-view', 'view-top', 'view-bottom');
+    });
+    if (first === -1 || last === -1) return;
+
+    for (let i = 0; i < charElements.length; i++) {
+      const el = charElements[i];
+      if (!el) continue;
+      if (i >= first && i <= last) {
+        el.classList.add('in-view');
+        if (i === first) el.classList.add('view-top');
+        if (i === last) el.classList.add('view-bottom');
+      }
+    }
+
+    // Auto-scroll typer's strip to keep highlight visible
+    const firstEl = charElements[first];
+    const lastEl = charElements[last];
+    if (firstEl && lastEl) {
+      const scrollEl = document.getElementById('captionScroll');
+      const stripTop = scrollEl.scrollTop;
+      const stripBottom = stripTop + scrollEl.clientHeight;
+      const elTop = firstEl.offsetTop;
+      const elBottom = lastEl.offsetTop + lastEl.offsetHeight;
+      // If highlight is mostly out of view, scroll to it
+      if (elTop < stripTop || elBottom > stripBottom) {
+        scrollEl.scrollTo({ top: elTop - 40, behavior: 'smooth' });
+      }
+    }
+  }
+
+  // ── DRAG / SWIPE SCROLL ──
+  function initDragScroll(el, onScrollCallback) {
+    let startY = 0, startScroll = 0, isDragging = false;
+    let velY = 0, lastY = 0, lastT = 0, rafId = null;
+
+    function onStart(y) {
+      isDragging = true; startY = y; startScroll = el.scrollTop;
+      velY = 0; lastY = y; lastT = Date.now();
+      if (rafId) cancelAnimationFrame(rafId);
+    }
+    function onMove(y) {
+      if (!isDragging) return;
+      el.scrollTop = startScroll + (startY - y);
+      const now = Date.now(); const dt = now - lastT || 1;
+      velY = (lastY - y) / dt * 16; lastY = y; lastT = now;
+      if (onScrollCallback) onScrollCallback();
+    }
+    function onEnd() {
+      isDragging = false;
+      function momentum() {
+        if (Math.abs(velY) < 0.5) return;
+        el.scrollTop += velY; velY *= 0.92;
+        if (onScrollCallback) onScrollCallback();
+        rafId = requestAnimationFrame(momentum);
+      }
+      momentum();
+    }
+
+    el.addEventListener('mousedown', e => { onStart(e.clientY); e.preventDefault(); });
+    window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientY); });
+    window.addEventListener('mouseup', () => onEnd());
+    el.addEventListener('touchstart', e => { onStart(e.touches[0].clientY); }, { passive: true });
+    el.addEventListener('touchmove', e => { onMove(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+    el.addEventListener('touchend', () => onEnd());
   }
 
   // ── MIC / CAM ──
@@ -399,15 +452,13 @@
     micOn = !micOn;
     if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = micOn);
     const btn = document.getElementById('micBtn');
-    btn.textContent = micOn ? '🎤' : '🔇';
-    btn.classList.toggle('off', !micOn);
+    btn.textContent = micOn ? '🎤' : '🔇'; btn.classList.toggle('off', !micOn);
   }
   function toggleCam() {
     camOn = !camOn;
     if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = camOn);
     const btn = document.getElementById('camBtn');
-    btn.textContent = camOn ? '📷' : '🚫';
-    btn.classList.toggle('off', !camOn);
+    btn.textContent = camOn ? '📷' : '🚫'; btn.classList.toggle('off', !camOn);
     document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.3';
   }
 
@@ -419,7 +470,6 @@
       config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
     };
   }
-
   async function getMedia() {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     document.getElementById('localVideo').srcObject = localStream;
@@ -427,6 +477,7 @@
 
   // ── TYPER ──
   async function startAsTyper() {
+    isTyper = true;
     document.getElementById('joinBtn').disabled = true;
     document.getElementById('status').textContent = '取得相機中…';
     try { await getMedia(); }
@@ -442,10 +493,16 @@
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('callScreen').style.display = 'flex';
       document.getElementById('inputArea').style.display = 'flex';
+      document.getElementById('viewLegend').style.display = 'block';
 
-      const scrollEl = document.getElementById('captionScroll');
-      initDragScroll(scrollEl);
-      initScrollSync(scrollEl);  // sync scroll to viewer
+      // Typer drag → sync scroll position to viewer
+      initDragScroll(document.getElementById('captionScroll'), () => {
+        if (conn && conn.open) {
+          const el = document.getElementById('captionScroll');
+          const pct = el.scrollTop / (el.scrollHeight - el.clientHeight || 1);
+          conn.send({ type: 'scrollPct', pct });
+        }
+      });
 
       const link = makeShareLink(myPeerId);
       document.getElementById('shareLink').textContent = link;
@@ -457,10 +514,15 @@
           document.getElementById('sendBtn').disabled = false;
           if (allText) conn.send({ type: 'text', text: allText });
         });
+        conn.on('data', msg => {
+          // Receive viewport info from viewer
+          if (msg.type === 'viewport') {
+            applyViewportHighlight(msg.first, msg.last);
+          }
+        });
       });
       peer.on('call', incoming => {
-        call = incoming;
-        call.answer(localStream);
+        call = incoming; call.answer(localStream);
         call.on('stream', s => {
           document.getElementById('remoteVideo').srcObject = s;
           document.getElementById('waitOverlay').style.display = 'none';
@@ -471,6 +533,7 @@
 
   // ── VIEWER ──
   async function startAsViewer(targetId) {
+    isTyper = false;
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('connectingScreen').style.display = 'flex';
     try { await getMedia(); }
@@ -485,8 +548,10 @@
         conn.on('data', onData);
         document.getElementById('connectingScreen').style.display = 'none';
         document.getElementById('callScreen').style.display = 'flex';
-        // Viewer can also drag to scroll locally
-        initDragScroll(document.getElementById('captionScroll'));
+
+        // Viewer drag → report viewport back to typer
+        initDragScroll(document.getElementById('captionScroll'), scheduleViewportReport);
+
         document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
       });
       conn.on('error', () => { document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話'; });
@@ -503,8 +568,13 @@
     if (msg.type === 'text') {
       allText = msg.text;
       renderText(allText);
+      // Report current viewport after render
+      setTimeout(scheduleViewportReport, 100);
     } else if (msg.type === 'scrollPct') {
-      applyScrollPct(msg.pct);
+      // Typer scrolled → move viewer
+      const el = document.getElementById('captionScroll');
+      el.scrollTop = msg.pct * (el.scrollHeight - el.clientHeight);
+      setTimeout(scheduleViewportReport, 100);
     }
   }
 
@@ -516,14 +586,12 @@
     if (allText.length > 0) allText += '\n';
     allText += text;
     renderText(allText);
-    // Scroll to bottom
     setTimeout(() => {
       const el = document.getElementById('captionScroll');
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }, 50);
     if (conn && conn.open) conn.send({ type: 'text', text: allText });
-    input.value = '';
-    input.focus();
+    input.value = ''; input.focus();
   }
 
   function copyLink() {
@@ -538,7 +606,7 @@
     if (conn) { conn.close(); conn = null; }
     if (peer) { peer.destroy(); peer = null; }
     if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-    micOn = true; camOn = true; allText = '';
+    micOn = true; camOn = true; allText = ''; charElements = [];
     window.history.replaceState({}, '', window.location.pathname);
     location.reload();
   }
