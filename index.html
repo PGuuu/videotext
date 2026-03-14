@@ -14,6 +14,7 @@
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
 
+    /* ── LOBBY ── */
     #lobby {
       height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 28px; padding: 24px;
@@ -43,6 +44,7 @@
     #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; }
     #status.err { color: #f85149; }
 
+    /* ── CONNECTING ── */
     #connectingScreen {
       display: none; height: 100vh; flex-direction: column;
       align-items: center; justify-content: center; gap: 20px; padding: 32px; background: var(--bg);
@@ -52,9 +54,11 @@
     #connectingScreen h2 { font-size: 20px; font-weight: 700; }
     #connectingScreen p  { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
 
+    /* ── CALL SCREEN ── */
     #callScreen { display: none; height: 100vh; height: 100dvh; flex-direction: column; }
     #callTop    { flex: 1; display: flex; min-height: 0; }
 
+    /* Caption strip */
     #captionStrip {
       width: 33.333%; background: #080b10;
       border-right: 1px solid rgba(255,255,255,0.08);
@@ -63,20 +67,13 @@
       display: flex; flex-direction: column;
     }
     #captionStrip:active { cursor: grabbing; }
-
     #stripLabel {
-      display: none;
-      padding: 5px 0;
-      text-align: center;
-      font-size: 10px;
-      color: rgba(56,139,253,0.8);
+      display: none; padding: 5px 0; text-align: center;
+      font-size: 10px; color: rgba(56,139,253,0.8);
       background: rgba(56,139,253,0.1);
       border-bottom: 1px solid rgba(56,139,253,0.2);
-      flex-shrink: 0;
-      pointer-events: none;
-      z-index: 3;
+      flex-shrink: 0; pointer-events: none; z-index: 3;
     }
-
     #captionScroll {
       flex: 1; overflow-y: scroll; overflow-x: hidden;
       scrollbar-width: none; touch-action: none;
@@ -99,33 +96,61 @@
       text-align: center; padding: 24px 8px; line-height: 2.2; width: 100%;
     }
 
+    /* Video area */
     #videoWrap { flex: 1; position: relative; background: #000; overflow: hidden; }
     #remoteVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ── Local video: TOP RIGHT ── */
     #localVideo {
-      position: absolute; bottom: 58px; right: 8px; width: 72px; height: 96px;
-      border-radius: 8px; object-fit: cover; border: 2px solid rgba(255,255,255,0.18); background: #111;
+      position: absolute;
+      top: 12px; right: 12px;
+      width: 80px; height: 108px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: #111;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      z-index: 5;
     }
+
     #waitOverlay {
       position: absolute; inset: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 10px; color: var(--muted);
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.6); z-index: 4;
     }
     #waitOverlay .wi { font-size: 38px; }
     #waitOverlay p { font-size: 12px; text-align: center; line-height: 1.7; padding: 0 10px; }
-    #vidControls {
-      position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 10px;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      background: linear-gradient(to top, rgba(0,0,0,0.65), transparent);
-    }
-    .ctrl-btn {
-      width: 42px; height: 42px; border-radius: 50%; border: none;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; cursor: pointer; background: rgba(255,255,255,0.15); transition: all 0.15s;
-    }
-    .ctrl-btn.off { background: rgba(248,81,73,0.75); }
-    .ctrl-btn.end { background: rgba(248,81,73,0.9); width: 48px; height: 48px; }
-    .ctrl-btn:active { transform: scale(0.9); }
 
+    /* ── Control bar ── */
+    #vidControls {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px 16px;
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+      z-index: 6;
+    }
+
+    /* Icon buttons — SVG style like the screenshot */
+    .ctrl-btn {
+      width: 48px; height: 48px; border-radius: 50%; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .ctrl-btn svg { width: 22px; height: 22px; fill: #fff; }
+    .ctrl-btn:active { transform: scale(0.9); }
+    .ctrl-btn.off { background: rgba(248,81,73,0.75); }
+    .ctrl-btn.off svg { fill: #fff; }
+    .ctrl-btn.end {
+      width: 56px; height: 56px;
+      background: #e53e3e;
+      box-shadow: 0 4px 18px rgba(229,62,62,0.45);
+    }
+    .ctrl-btn.end svg { width: 26px; height: 26px; }
+
+    /* Input area */
     #inputArea {
       background: var(--bg); border-top: 1px solid var(--border);
       padding: 10px 12px 14px; display: none; gap: 8px; align-items: flex-end;
@@ -143,6 +168,7 @@
     }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* Modals */
     .modal-bg {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78);
       align-items: center; justify-content: center; z-index: 100; padding: 24px;
@@ -165,15 +191,20 @@
       background: rgba(56,139,253,0.15); color: var(--blue);
       font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
     }
-    .btn-green {
-      width: 100%; padding: 13px; border-radius: 10px; border: none;
-      background: var(--accent); color: #fff;
-      font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+
+    /* Ended screen */
+    #endedScreen {
+      display: none; height: 100vh; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px; padding: 32px; background: var(--bg);
     }
+    #endedScreen .ei { font-size: 52px; }
+    #endedScreen h2  { font-size: 20px; font-weight: 700; }
+    #endedScreen p   { font-size: 14px; color: var(--muted); }
   </style>
 </head>
 <body>
 
+<!-- LOBBY -->
 <div id="lobby">
   <div class="logo">
     <div class="logo-icon">📞</div>
@@ -189,6 +220,7 @@
   </div>
 </div>
 
+<!-- CONNECTING -->
 <div id="connectingScreen">
   <div class="ci">📡</div>
   <h2>連線中…</h2>
@@ -196,18 +228,27 @@
   <div id="connectErr" style="font-size:13px;color:#f85149;text-align:center;margin-top:8px;"></div>
 </div>
 
+<!-- ENDED (viewer sees this when typer hangs up) -->
+<div id="endedScreen">
+  <div class="ei">📵</div>
+  <h2>通話已結束</h2>
+  <p>對方已掛斷通話</p>
+</div>
+
+<!-- SHARE MODAL — only copy button, no dismiss button -->
 <div class="modal-bg" id="shareModal">
   <div class="modal-card">
     <h2>📤 傳連結給外公</h2>
     <p>用 LINE 把這個連結傳給外公，外公點開就會自動加入。</p>
     <div class="link-box" id="shareLink"></div>
     <button class="btn-blue" id="copyBtn" onclick="copyLink()">複製連結</button>
-    <button class="btn-green" onclick="document.getElementById('shareModal').classList.remove('show')">好，等外公連線</button>
   </div>
 </div>
 
+<!-- CALL SCREEN -->
 <div id="callScreen">
   <div id="callTop">
+
     <div id="captionStrip">
       <div id="stripLabel">👁 外公的畫面</div>
       <div id="captionScroll">
@@ -216,20 +257,43 @@
         </div>
       </div>
     </div>
+
     <div id="videoWrap">
       <video id="remoteVideo" autoplay playsinline></video>
       <video id="localVideo"  autoplay playsinline muted></video>
+
       <div id="waitOverlay">
         <div class="wi">📡</div>
         <p id="waitText">等待對方連線…</p>
       </div>
+
       <div id="vidControls">
-        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">🎤</button>
-        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">📷</button>
-        <button class="ctrl-btn end" onclick="endCall()">📵</button>
+        <!-- Mute mic -->
+        <button class="ctrl-btn" id="micBtn" onclick="toggleMic()" title="靜音">
+          <svg id="micIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6.5 9a.5.5 0 0 1 .5.5 6 6 0 0 0 12 0 .5.5 0 0 1 1 0 7 7 0 0 1-6.5 6.96V21h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-3.54A7 7 0 0 1 5 10.5a.5.5 0 0 1 .5-.5z"/>
+          </svg>
+        </button>
+
+        <!-- Camera -->
+        <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="關閉鏡頭">
+          <svg id="camIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v1.586l3.707-3.707A1 1 0 0 1 22 5.586v12.828a1 1 0 0 1-1.707.707L17 15.414V17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z"/>
+          </svg>
+        </button>
+
+        <!-- End call -->
+        <button class="ctrl-btn end" onclick="endCall()" title="結束通話">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+          </svg>
+        </button>
       </div>
     </div>
+
   </div>
+
+  <!-- Typer input -->
   <div id="inputArea">
     <textarea id="msgInput" placeholder="輸入文字…" rows="1"></textarea>
     <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>傳送</button>
@@ -248,12 +312,10 @@
   const joinId  = params.get('join');
   if (joinId) window.addEventListener('load', () => startAsViewer(joinId));
 
-  // Font size for a given screen width
   function fontSizeFor(w) { return Math.floor(w * 0.333 * 0.82); }
   function myFontSize()   { return fontSizeFor(window.innerWidth); }
   function vFontSize()    { return viewerScreenWidth ? fontSizeFor(viewerScreenWidth) : myFontSize(); }
 
-  // TURN credentials
   async function getIceServers() {
     if (iceServersCache) return iceServersCache;
     try {
@@ -268,11 +330,10 @@
     });
   }
 
-  // Render text at given font size
   function renderText(text, fs) {
-    const container   = document.getElementById('captionText');
-    const placeholder = document.getElementById('captionPlaceholder');
-    if (placeholder) placeholder.style.display = 'none';
+    const container = document.getElementById('captionText');
+    const ph = document.getElementById('captionPlaceholder');
+    if (ph) ph.style.display = 'none';
     container.querySelectorAll('.char-el,.char-space').forEach(e => e.remove());
     for (const ch of text) {
       if (ch === '\n') {
@@ -282,7 +343,7 @@
         container.appendChild(sp);
       } else {
         const d = document.createElement('div');
-        d.className   = 'char-el';
+        d.className = 'char-el';
         d.textContent = ch;
         d.style.fontSize   = fs + 'px';
         d.style.lineHeight = (fs * 1.15) + 'px';
@@ -291,7 +352,6 @@
     }
   }
 
-  // Viewer reports scroll position + screen width to typer
   let scrollTimer = null;
   function reportScroll() {
     if (scrollTimer) return;
@@ -304,21 +364,18 @@
     }, 60);
   }
 
-  // Apply scroll pct to captionScroll without triggering re-report
   function applyScroll(pct) {
     const el = document.getElementById('captionScroll');
-    const max = el.scrollHeight - el.clientHeight;
     suppressScroll = true;
-    el.scrollTop = pct * max;
+    el.scrollTop = pct * (el.scrollHeight - el.clientHeight);
     setTimeout(() => { suppressScroll = false; }, 200);
   }
 
-  // Drag/swipe with momentum
   function initDragScroll(el, cb) {
-    let sy = 0, ss = 0, drag = false, vel = 0, ly = 0, lt = 0, raf = null;
+    let sy=0, ss=0, drag=false, vel=0, ly=0, lt=0, raf=null;
     const start = y => { drag=true; sy=y; ss=el.scrollTop; vel=0; ly=y; lt=Date.now(); if(raf) cancelAnimationFrame(raf); };
     const move  = y => { if(!drag) return; el.scrollTop=ss+(sy-y); const now=Date.now(),dt=now-lt||1; vel=(ly-y)/dt*16; ly=y; lt=now; if(cb) cb(); };
-    const end   = ()  => { drag=false; const go=()=>{ if(Math.abs(vel)<0.5) return; el.scrollTop+=vel; vel*=0.92; if(cb) cb(); raf=requestAnimationFrame(go); }; go(); };
+    const end   = () => { drag=false; const go=()=>{ if(Math.abs(vel)<0.5) return; el.scrollTop+=vel; vel*=0.92; if(cb) cb(); raf=requestAnimationFrame(go); }; go(); };
     el.addEventListener('mousedown',  e => { start(e.clientY); e.preventDefault(); });
     window.addEventListener('mousemove', e => { if(drag) move(e.clientY); });
     window.addEventListener('mouseup',   () => end());
@@ -327,20 +384,32 @@
     el.addEventListener('touchend',   () => end());
   }
 
+  // SVG mic icons
+  const MIC_ON  = `<path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6.5 9a.5.5 0 0 1 .5.5 6 6 0 0 0 12 0 .5.5 0 0 1 1 0 7 7 0 0 1-6.5 6.96V21h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-3.54A7 7 0 0 1 5 10.5a.5.5 0 0 1 .5-.5z"/>`;
+  const MIC_OFF = `<path d="M3.28 2.22a.75.75 0 0 0-1.06 1.06l2.06 2.06A4 4 0 0 0 4 5v6a4 4 0 0 0 7.93.75l1.1 1.1A6 6 0 0 1 6 10.5a.5.5 0 0 0-1 0 7 7 0 0 0 6.5 6.96V21h-3a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-3v-3.54c.82-.1 1.6-.35 2.3-.72l1.92 1.92a.75.75 0 1 0 1.06-1.06L3.28 2.22zM16 10.5c0 .5-.07.98-.2 1.44l1.1 1.1c.27-.79.43-1.63.1-2.54V5a4 4 0 0 0-7.63-1.68l1.45 1.45C11.1 4.32 11.51 4 12 4a3 3 0 0 1 3 3v3.5z"/>`;
+  const CAM_ON  = `<path d="M2 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v1.586l3.707-3.707A1 1 0 0 1 22 5.586v12.828a1 1 0 0 1-1.707.707L17 15.414V17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7z"/>`;
+  const CAM_OFF = `<path d="M3.28 2.22a.75.75 0 0 0-1.06 1.06L4 5.06A2 2 0 0 0 2 7v10a2 2 0 0 0 2 2h11c.36 0 .7-.1 1-.26l1.72 1.72a.75.75 0 1 0 1.06-1.06l-1.48-1.48L17 17.94l.293.293A1 1 0 0 0 19 17.414v-2l3 3A1 1 0 0 0 24 17.586V6.414a1 1 0 0 0-1.707-.707L19 9V7a2 2 0 0 0-2-2H6.06L3.28 2.22zM19 11.414l2-2v5.172l-2-2v-1.172zM5.56 6.62 15.38 16.44A1 1 0 0 1 15 17H4a1 1 0 0 1-1-1V7a1 1 0 0 1 .56-.9L5.56 6.62z"/>`;
+
   function toggleMic() {
-    micOn=!micOn; if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled=micOn);
-    const b=document.getElementById('micBtn'); b.textContent=micOn?'🎤':'🔇'; b.classList.toggle('off',!micOn);
+    micOn = !micOn;
+    if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+    const btn = document.getElementById('micBtn');
+    btn.querySelector('svg').innerHTML = micOn ? MIC_ON : MIC_OFF;
+    btn.classList.toggle('off', !micOn);
   }
   function toggleCam() {
-    camOn=!camOn; if(localStream) localStream.getVideoTracks().forEach(t=>t.enabled=camOn);
-    const b=document.getElementById('camBtn'); b.textContent=camOn?'📷':'🚫'; b.classList.toggle('off',!camOn);
-    document.getElementById('localVideo').style.opacity=camOn?'1':'0.3';
+    camOn = !camOn;
+    if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+    const btn = document.getElementById('camBtn');
+    btn.querySelector('svg').innerHTML = camOn ? CAM_ON : CAM_OFF;
+    btn.classList.toggle('off', !camOn);
+    document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.4';
   }
 
   function randId()          { return 'fam-'+Math.random().toString(36).slice(2,10); }
   function makeShareLink(id) { return location.origin+location.pathname+'?join='+id; }
   async function getMedia()  {
-    localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
     document.getElementById('localVideo').srcObject = localStream;
   }
 
@@ -364,7 +433,6 @@
       document.getElementById('callScreen').style.display = 'flex';
       document.getElementById('inputArea').style.display = 'flex';
 
-      // Typer drags → push scroll to viewer
       initDragScroll(document.getElementById('captionScroll'), () => {
         if (!conn || !conn.open || suppressScroll) return;
         const el = document.getElementById('captionScroll');
@@ -378,22 +446,20 @@
       peer.on('connection', c => {
         conn = c;
         conn.on('open', () => {
+          // Viewer connected: close share modal
+          document.getElementById('shareModal').classList.remove('show');
           document.getElementById('sendBtn').disabled = false;
           if (currentText) conn.send({ type: 'text', text: currentText });
         });
         conn.on('data', msg => {
           if (msg.type === 'viewerScroll') {
-            // First message from viewer: switch to mirror mode
             if (!isMirrorMode) {
               isMirrorMode = true;
               viewerScreenWidth = msg.screenWidth || window.innerWidth;
               document.getElementById('stripLabel').style.display = 'block';
-              // Re-render at viewer's font size
               if (currentText) renderText(currentText, vFontSize());
             }
-            // Update viewer screen width if changed (unlikely but safe)
             if (msg.screenWidth) viewerScreenWidth = msg.screenWidth;
-            // Mirror viewer's scroll position
             applyScroll(msg.pct);
           }
         });
@@ -431,11 +497,15 @@
           } else if (msg.type === 'scrollPct') {
             applyScroll(msg.pct);
             setTimeout(reportScroll, 200);
+          } else if (msg.type === 'hangup') {
+            // Typer hung up → show ended screen
+            cleanupMedia();
+            document.getElementById('callScreen').style.display = 'none';
+            document.getElementById('endedScreen').style.display = 'flex';
           }
         });
         document.getElementById('connectingScreen').style.display = 'none';
         document.getElementById('callScreen').style.display = 'flex';
-        // Viewer drags → report scroll back
         initDragScroll(document.getElementById('captionScroll'), () => { if (!suppressScroll) reportScroll(); });
         window.addEventListener('resize', reportScroll);
         reportScroll();
@@ -450,33 +520,22 @@
     });
   }
 
-  // ── SEND (REPLACE) ─────────────────────────────────────────
+  // ── SEND (replace) ─────────────────────────────────────────
   function sendMsg() {
     const input = document.getElementById('msgInput');
     const text  = input.value.trim();
     if (!text) return;
-
-    currentText = text; // replace, not append
-
-    // Render at viewer's font size if mirroring, else own
+    currentText = text;
     renderText(currentText, isMirrorMode ? vFontSize() : myFontSize());
     document.getElementById('captionScroll').scrollTop = 0;
-
     if (conn && conn.open) conn.send({ type: 'text', text: currentText });
-
-    input.value = '';
-    input.style.height = '';
-    input.focus();
+    input.value = ''; input.style.height = ''; input.focus();
   }
 
-  // Auto-grow textarea
   window.addEventListener('load', () => {
     const ta = document.getElementById('msgInput');
     if (!ta) return;
-    ta.addEventListener('input', () => {
-      ta.style.height = '';
-      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
-    });
+    ta.addEventListener('input', () => { ta.style.height=''; ta.style.height=Math.min(ta.scrollHeight,120)+'px'; });
   });
 
   function copyLink() {
@@ -486,13 +545,24 @@
     setTimeout(() => b.textContent = '複製連結', 2000);
   }
 
+  function cleanupMedia() {
+    if (call) { try { call.close(); } catch{} call = null; }
+    if (conn) { try { conn.close(); } catch{} conn = null; }
+    if (peer) { try { peer.destroy(); } catch{} peer = null; }
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  }
+
   function endCall() {
-    [call,conn,peer].forEach(x => x && x.close?.() || x?.destroy?.());
-    call=conn=peer=null;
-    if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
-    micOn=true; camOn=true; currentText=''; isMirrorMode=false; viewerScreenWidth=0;
-    window.history.replaceState({}, '', location.pathname);
-    location.reload();
+    // Notify viewer before closing
+    if (conn && conn.open) {
+      try { conn.send({ type: 'hangup' }); } catch {}
+    }
+    setTimeout(() => {
+      cleanupMedia();
+      micOn = true; camOn = true; currentText = ''; isMirrorMode = false; viewerScreenWidth = 0;
+      window.history.replaceState({}, '', location.pathname);
+      location.reload();
+    }, 200); // small delay to let message send
   }
 
   document.addEventListener('keydown', e => {
