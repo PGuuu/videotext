@@ -27,7 +27,7 @@
       box-shadow: 0 8px 28px rgba(46,160,67,0.28);
     }
     .logo h1 { font-size: 26px; font-weight: 900; }
-    .logo p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .logo p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .card {
       width: 100%; max-width: 370px; background: var(--surface);
       border: 1px solid var(--border); border-radius: 16px; padding: 22px;
@@ -50,43 +50,50 @@
     #connectingScreen .ci { font-size: 60px; animation: spin 2s linear infinite; }
     @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
     #connectingScreen h2 { font-size: 20px; font-weight: 700; }
-    #connectingScreen p { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
+    #connectingScreen p  { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.7; }
 
     #callScreen { display: none; height: 100vh; height: 100dvh; flex-direction: column; }
-    #callTop { flex: 1; display: flex; min-height: 0; }
+    #callTop    { flex: 1; display: flex; min-height: 0; }
 
     #captionStrip {
       width: 33.333%; background: #080b10;
       border-right: 1px solid rgba(255,255,255,0.08);
-      position: relative; overflow: hidden; cursor: grab; user-select: none; touch-action: none;
+      position: relative; overflow: hidden;
+      cursor: grab; user-select: none; touch-action: none;
+      display: flex; flex-direction: column;
     }
     #captionStrip:active { cursor: grabbing; }
+
+    #stripLabel {
+      display: none;
+      padding: 5px 0;
+      text-align: center;
+      font-size: 10px;
+      color: rgba(56,139,253,0.8);
+      background: rgba(56,139,253,0.1);
+      border-bottom: 1px solid rgba(56,139,253,0.2);
+      flex-shrink: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+
     #captionScroll {
-      height: 100%; overflow-y: scroll; overflow-x: hidden;
+      flex: 1; overflow-y: scroll; overflow-x: hidden;
       scrollbar-width: none; touch-action: none;
     }
     #captionScroll::-webkit-scrollbar { display: none; }
     #captionText {
-      display: flex; flex-direction: column; align-items: center; padding: 20px 0 60px;
+      display: flex; flex-direction: column; align-items: center; padding: 16px 0 60px;
     }
     .char-el {
       font-weight: 900; line-height: 1.15; text-align: center; color: #fff; width: 100%;
-      transition: background 0.15s, color 0.15s;
     }
-    .char-el.in-view { background: rgba(56,139,253,0.25); color: #93c5fd; }
-    .char-el.view-top { background: rgba(56,139,253,0.35); color: #60a5fa; border-top: 2px solid #388bfd; }
-    .char-el.view-bottom { background: rgba(56,139,253,0.35); color: #60a5fa; border-bottom: 2px solid #388bfd; }
     .char-space { width: 100%; }
     #captionStrip::before, #captionStrip::after {
       content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
     }
     #captionStrip::before { top: 0; height: 28px; background: linear-gradient(to bottom, #080b10, transparent); }
     #captionStrip::after  { bottom: 0; height: 48px; background: linear-gradient(to top, #080b10, transparent); }
-    #viewLegend {
-      position: absolute; bottom: 8px; left: 0; right: 0;
-      text-align: center; font-size: 10px; z-index: 3; pointer-events: none;
-      color: rgba(255,255,255,0.25);
-    }
     #captionPlaceholder {
       color: rgba(255,255,255,0.12); font-size: 13px;
       text-align: center; padding: 24px 8px; line-height: 2.2; width: 100%;
@@ -126,7 +133,7 @@
     #msgInput {
       flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
       border-radius: 10px; padding: 10px 12px; font-size: 16px; color: var(--text);
-      font-family: inherit; resize: none; outline: none; min-height: 44px; max-height: 100px;
+      font-family: inherit; resize: none; outline: none; min-height: 44px; max-height: 120px;
     }
     #msgInput:focus { border-color: var(--blue); }
     .send-btn {
@@ -147,7 +154,7 @@
       display: flex; flex-direction: column; gap: 14px;
     }
     .modal-card h2 { font-size: 18px; font-weight: 700; }
-    .modal-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+    .modal-card p  { font-size: 13px; color: var(--muted); line-height: 1.7; }
     .link-box {
       background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px;
       font-size: 12px; color: var(--blue); border: 1px solid var(--border);
@@ -175,8 +182,7 @@
   </div>
   <div class="card">
     <p style="font-size:14px;color:var(--muted);line-height:1.7;">
-      按下「開始通話」，App 會產生一個連結。<br>
-      把連結傳給外公，外公點開就自動加入。
+      按下「開始通話」，App 會產生一個連結。<br>把連結傳給外公，外公點開就自動加入。
     </p>
     <div id="status"></div>
     <button class="join-btn" id="joinBtn" onclick="startAsTyper()">開始通話</button>
@@ -203,16 +209,16 @@
 <div id="callScreen">
   <div id="callTop">
     <div id="captionStrip">
+      <div id="stripLabel">👁 外公的畫面</div>
       <div id="captionScroll">
         <div id="captionText">
           <div id="captionPlaceholder">等待<br>訊息<br>…</div>
         </div>
       </div>
-      <div id="viewLegend" style="display:none;">▣ 藍色 = 外公目前看到的字</div>
     </div>
     <div id="videoWrap">
       <video id="remoteVideo" autoplay playsinline></video>
-      <video id="localVideo" autoplay playsinline muted></video>
+      <video id="localVideo"  autoplay playsinline muted></video>
       <div id="waitOverlay">
         <div class="wi">📡</div>
         <p id="waitText">等待對方連線…</p>
@@ -232,211 +238,138 @@
 
 <script>
   let peer, conn = null, call = null, localStream = null;
-  let myPeerId = '', allText = '', charFontSize = 32;
-  let micOn = true, camOn = true;
-  let charElements = [];
+  let myPeerId = '', currentText = '';
+  let micOn = true, camOn = true, isTyper = false;
   let iceServersCache = null;
+  let viewerScreenWidth = 0, isMirrorMode = false;
+  let suppressScroll = false;
 
   const params = new URLSearchParams(window.location.search);
-  const joinId = params.get('join');
+  const joinId  = params.get('join');
+  if (joinId) window.addEventListener('load', () => startAsViewer(joinId));
 
-  window.addEventListener('load', () => {
-    if (joinId) startAsViewer(joinId);
-    calcFontSize();
-    window.addEventListener('resize', () => { calcFontSize(); if (allText) renderText(allText); });
-  });
+  // Font size for a given screen width
+  function fontSizeFor(w) { return Math.floor(w * 0.333 * 0.82); }
+  function myFontSize()   { return fontSizeFor(window.innerWidth); }
+  function vFontSize()    { return viewerScreenWidth ? fontSizeFor(viewerScreenWidth) : myFontSize(); }
 
-  function calcFontSize() {
-    charFontSize = Math.floor(window.innerWidth * 0.333 * 0.82);
-  }
-
-  // ── Fetch TURN credentials from Metered ──
+  // TURN credentials
   async function getIceServers() {
     if (iceServersCache) return iceServersCache;
     try {
-      const res = await fetch('https://paulgulla.metered.live/api/v1/turn/credentials?apiKey=c9122c7ffa5323cf3e1e2e5fed97b3346567');
-      const servers = await res.json();
-      iceServersCache = servers;
-      return servers;
-    } catch(e) {
-      // Fallback to Google STUN if fetch fails
-      return [{ urls: 'stun:stun.l.google.com:19302' }];
-    }
+      const r = await fetch('https://paulgulla.metered.live/api/v1/turn/credentials?apiKey=c9122c7ffa5323cf3e1e2e5fed97b3346567');
+      iceServersCache = await r.json(); return iceServersCache;
+    } catch { return [{ urls: 'stun:stun.l.google.com:19302' }]; }
   }
-
   async function makePeer(id) {
-    const iceServers = await getIceServers();
     return new Peer(id, {
       host: '0.peerjs.com', port: 443, path: '/', secure: true,
-      config: { iceServers, iceCandidatePoolSize: 10 }
+      config: { iceServers: await getIceServers(), iceCandidatePoolSize: 10 }
     });
   }
 
-  // ── RENDER ──
-  function renderText(text) {
-    const container = document.getElementById('captionText');
+  // Render text at given font size
+  function renderText(text, fs) {
+    const container   = document.getElementById('captionText');
     const placeholder = document.getElementById('captionPlaceholder');
     if (placeholder) placeholder.style.display = 'none';
-    container.querySelectorAll('.char-el, .char-space').forEach(el => el.remove());
-    charElements = [];
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
+    container.querySelectorAll('.char-el,.char-space').forEach(e => e.remove());
+    for (const ch of text) {
       if (ch === '\n') {
         const sp = document.createElement('div');
         sp.className = 'char-space';
-        sp.style.height = Math.round(charFontSize * 0.5) + 'px';
+        sp.style.height = Math.round(fs * 0.5) + 'px';
         container.appendChild(sp);
-        charElements.push(null);
       } else {
-        const div = document.createElement('div');
-        div.className = 'char-el';
-        div.textContent = ch;
-        div.style.fontSize = charFontSize + 'px';
-        div.style.lineHeight = (charFontSize * 1.15) + 'px';
-        container.appendChild(div);
-        charElements.push(div);
+        const d = document.createElement('div');
+        d.className   = 'char-el';
+        d.textContent = ch;
+        d.style.fontSize   = fs + 'px';
+        d.style.lineHeight = (fs * 1.15) + 'px';
+        container.appendChild(d);
       }
     }
   }
 
-  // ── VIEWPORT ──
-  function getVisibleCharRange() {
-    const scrollEl = document.getElementById('captionScroll');
-    const top = scrollEl.scrollTop, bottom = top + scrollEl.clientHeight;
-    let first = -1, last = -1;
-    for (let i = 0; i < charElements.length; i++) {
-      const el = charElements[i];
-      if (!el) continue;
-      const elTop = el.offsetTop, elBottom = elTop + el.offsetHeight;
-      if (elBottom > top && elTop < bottom) {
-        if (first === -1) first = i;
-        last = i;
-      }
-    }
-    return { first, last };
+  // Viewer reports scroll position + screen width to typer
+  let scrollTimer = null;
+  function reportScroll() {
+    if (scrollTimer) return;
+    scrollTimer = setTimeout(() => {
+      scrollTimer = null;
+      if (!conn || !conn.open) return;
+      const el = document.getElementById('captionScroll');
+      const max = el.scrollHeight - el.clientHeight;
+      conn.send({ type: 'viewerScroll', pct: max > 0 ? el.scrollTop / max : 0, screenWidth: window.innerWidth });
+    }, 60);
   }
 
-  let viewportTimer = null;
-  function scheduleViewportReport() {
-    if (viewportTimer) return;
-    viewportTimer = setTimeout(() => {
-      viewportTimer = null;
-      if (conn && conn.open) {
-        const r = getVisibleCharRange();
-        conn.send({ type: 'viewport', first: r.first, last: r.last });
-      }
-    }, 80);
+  // Apply scroll pct to captionScroll without triggering re-report
+  function applyScroll(pct) {
+    const el = document.getElementById('captionScroll');
+    const max = el.scrollHeight - el.clientHeight;
+    suppressScroll = true;
+    el.scrollTop = pct * max;
+    setTimeout(() => { suppressScroll = false; }, 200);
   }
 
-  function applyViewportHighlight(first, last) {
-    charElements.forEach(el => {
-      if (!el) return;
-      el.classList.remove('in-view', 'view-top', 'view-bottom');
-    });
-    if (first === -1 || last === -1) return;
-    for (let i = 0; i < charElements.length; i++) {
-      const el = charElements[i];
-      if (!el) continue;
-      if (i >= first && i <= last) {
-        el.classList.add('in-view');
-        if (i === first) el.classList.add('view-top');
-        if (i === last) el.classList.add('view-bottom');
-      }
-    }
-    const firstEl = charElements[first];
-    if (firstEl) {
-      const scrollEl = document.getElementById('captionScroll');
-      const stripTop = scrollEl.scrollTop, stripBottom = stripTop + scrollEl.clientHeight;
-      if (firstEl.offsetTop < stripTop || firstEl.offsetTop > stripBottom) {
-        scrollEl.scrollTo({ top: firstEl.offsetTop - 40, behavior: 'smooth' });
-      }
-    }
-  }
-
-  // ── DRAG/SWIPE ──
-  function initDragScroll(el, onScrollCb) {
-    let startY = 0, startScroll = 0, isDragging = false;
-    let velY = 0, lastY = 0, lastT = 0, rafId = null;
-    function onStart(y) {
-      isDragging = true; startY = y; startScroll = el.scrollTop;
-      velY = 0; lastY = y; lastT = Date.now();
-      if (rafId) cancelAnimationFrame(rafId);
-    }
-    function onMove(y) {
-      if (!isDragging) return;
-      el.scrollTop = startScroll + (startY - y);
-      const now = Date.now(), dt = now - lastT || 1;
-      velY = (lastY - y) / dt * 16; lastY = y; lastT = now;
-      if (onScrollCb) onScrollCb();
-    }
-    function onEnd() {
-      isDragging = false;
-      function momentum() {
-        if (Math.abs(velY) < 0.5) return;
-        el.scrollTop += velY; velY *= 0.92;
-        if (onScrollCb) onScrollCb();
-        rafId = requestAnimationFrame(momentum);
-      }
-      momentum();
-    }
-    el.addEventListener('mousedown', e => { onStart(e.clientY); e.preventDefault(); });
-    window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientY); });
-    window.addEventListener('mouseup', () => onEnd());
-    el.addEventListener('touchstart', e => { onStart(e.touches[0].clientY); }, { passive: true });
-    el.addEventListener('touchmove', e => { onMove(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
-    el.addEventListener('touchend', () => onEnd());
+  // Drag/swipe with momentum
+  function initDragScroll(el, cb) {
+    let sy = 0, ss = 0, drag = false, vel = 0, ly = 0, lt = 0, raf = null;
+    const start = y => { drag=true; sy=y; ss=el.scrollTop; vel=0; ly=y; lt=Date.now(); if(raf) cancelAnimationFrame(raf); };
+    const move  = y => { if(!drag) return; el.scrollTop=ss+(sy-y); const now=Date.now(),dt=now-lt||1; vel=(ly-y)/dt*16; ly=y; lt=now; if(cb) cb(); };
+    const end   = ()  => { drag=false; const go=()=>{ if(Math.abs(vel)<0.5) return; el.scrollTop+=vel; vel*=0.92; if(cb) cb(); raf=requestAnimationFrame(go); }; go(); };
+    el.addEventListener('mousedown',  e => { start(e.clientY); e.preventDefault(); });
+    window.addEventListener('mousemove', e => { if(drag) move(e.clientY); });
+    window.addEventListener('mouseup',   () => end());
+    el.addEventListener('touchstart', e => start(e.touches[0].clientY), {passive:true});
+    el.addEventListener('touchmove',  e => { move(e.touches[0].clientY); e.preventDefault(); }, {passive:false});
+    el.addEventListener('touchend',   () => end());
   }
 
   function toggleMic() {
-    micOn = !micOn;
-    if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = micOn);
-    const btn = document.getElementById('micBtn');
-    btn.textContent = micOn ? '🎤' : '🔇'; btn.classList.toggle('off', !micOn);
+    micOn=!micOn; if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled=micOn);
+    const b=document.getElementById('micBtn'); b.textContent=micOn?'🎤':'🔇'; b.classList.toggle('off',!micOn);
   }
   function toggleCam() {
-    camOn = !camOn;
-    if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = camOn);
-    const btn = document.getElementById('camBtn');
-    btn.textContent = camOn ? '📷' : '🚫'; btn.classList.toggle('off', !camOn);
-    document.getElementById('localVideo').style.opacity = camOn ? '1' : '0.3';
+    camOn=!camOn; if(localStream) localStream.getVideoTracks().forEach(t=>t.enabled=camOn);
+    const b=document.getElementById('camBtn'); b.textContent=camOn?'📷':'🚫'; b.classList.toggle('off',!camOn);
+    document.getElementById('localVideo').style.opacity=camOn?'1':'0.3';
   }
 
-  function randId() { return 'fam-' + Math.random().toString(36).slice(2, 10); }
-  function makeShareLink(id) { return window.location.origin + window.location.pathname + '?join=' + id; }
-
-  async function getMedia() {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  function randId()          { return 'fam-'+Math.random().toString(36).slice(2,10); }
+  function makeShareLink(id) { return location.origin+location.pathname+'?join='+id; }
+  async function getMedia()  {
+    localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
     document.getElementById('localVideo').srcObject = localStream;
   }
 
-  // ── TYPER ──
+  // ── TYPER ──────────────────────────────────────────────────
   async function startAsTyper() {
+    isTyper = true;
     document.getElementById('joinBtn').disabled = true;
     document.getElementById('status').textContent = '取得相機中…';
     try { await getMedia(); }
-    catch(e) {
+    catch {
       document.getElementById('status').textContent = '無法取得相機，請確認權限';
       document.getElementById('status').className = 'err';
       document.getElementById('joinBtn').disabled = false; return;
     }
-
     document.getElementById('status').textContent = '準備連線中…';
     myPeerId = randId();
     peer = await makePeer(myPeerId);
-
-    peer.on('error', e => { document.getElementById('status').textContent = '錯誤：' + e.type; });
+    peer.on('error', e => { document.getElementById('status').textContent = '錯誤：'+e.type; });
     peer.on('open', () => {
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('callScreen').style.display = 'flex';
       document.getElementById('inputArea').style.display = 'flex';
-      document.getElementById('viewLegend').style.display = 'block';
 
+      // Typer drags → push scroll to viewer
       initDragScroll(document.getElementById('captionScroll'), () => {
-        if (conn && conn.open) {
-          const el = document.getElementById('captionScroll');
-          const pct = el.scrollTop / (el.scrollHeight - el.clientHeight || 1);
-          conn.send({ type: 'scrollPct', pct });
-        }
+        if (!conn || !conn.open || suppressScroll) return;
+        const el = document.getElementById('captionScroll');
+        const max = el.scrollHeight - el.clientHeight;
+        conn.send({ type: 'scrollPct', pct: max > 0 ? el.scrollTop / max : 0 });
       });
 
       document.getElementById('shareLink').textContent = makeShareLink(myPeerId);
@@ -446,14 +379,27 @@
         conn = c;
         conn.on('open', () => {
           document.getElementById('sendBtn').disabled = false;
-          if (allText) conn.send({ type: 'text', text: allText });
+          if (currentText) conn.send({ type: 'text', text: currentText });
         });
         conn.on('data', msg => {
-          if (msg.type === 'viewport') applyViewportHighlight(msg.first, msg.last);
+          if (msg.type === 'viewerScroll') {
+            // First message from viewer: switch to mirror mode
+            if (!isMirrorMode) {
+              isMirrorMode = true;
+              viewerScreenWidth = msg.screenWidth || window.innerWidth;
+              document.getElementById('stripLabel').style.display = 'block';
+              // Re-render at viewer's font size
+              if (currentText) renderText(currentText, vFontSize());
+            }
+            // Update viewer screen width if changed (unlikely but safe)
+            if (msg.screenWidth) viewerScreenWidth = msg.screenWidth;
+            // Mirror viewer's scroll position
+            applyScroll(msg.pct);
+          }
         });
       });
-      peer.on('call', incoming => {
-        call = incoming; call.answer(localStream);
+      peer.on('call', inc => {
+        call = inc; call.answer(localStream);
         call.on('stream', s => {
           document.getElementById('remoteVideo').srcObject = s;
           document.getElementById('waitOverlay').style.display = 'none';
@@ -462,82 +408,95 @@
     });
   }
 
-  // ── VIEWER ──
+  // ── VIEWER ─────────────────────────────────────────────────
   async function startAsViewer(targetId) {
+    isTyper = false;
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('connectingScreen').style.display = 'flex';
     try { await getMedia(); }
-    catch(e) { document.getElementById('connectErr').textContent = '無法取得相機，請確認權限'; return; }
+    catch { document.getElementById('connectErr').textContent = '無法取得相機，請確認權限'; return; }
 
     myPeerId = randId();
     peer = await makePeer(myPeerId);
-
-    peer.on('error', e => { document.getElementById('connectErr').textContent = '連線錯誤：' + e.type; });
+    peer.on('error', e => { document.getElementById('connectErr').textContent = '連線錯誤：'+e.type; });
     peer.on('open', () => {
       conn = peer.connect(targetId, { reliable: true });
       conn.on('open', () => {
-        conn.on('data', onData);
+        conn.on('data', msg => {
+          if (msg.type === 'text') {
+            currentText = msg.text;
+            renderText(currentText, myFontSize());
+            document.getElementById('captionScroll').scrollTop = 0;
+            setTimeout(reportScroll, 100);
+          } else if (msg.type === 'scrollPct') {
+            applyScroll(msg.pct);
+            setTimeout(reportScroll, 200);
+          }
+        });
         document.getElementById('connectingScreen').style.display = 'none';
         document.getElementById('callScreen').style.display = 'flex';
-        initDragScroll(document.getElementById('captionScroll'), scheduleViewportReport);
+        // Viewer drags → report scroll back
+        initDragScroll(document.getElementById('captionScroll'), () => { if (!suppressScroll) reportScroll(); });
+        window.addEventListener('resize', reportScroll);
+        reportScroll();
         document.getElementById('waitOverlay').querySelector('p').textContent = '等待視訊連線…';
       });
       conn.on('error', () => { document.getElementById('connectErr').textContent = '連線失敗，請確認對方已開啟通話'; });
-
       call = peer.call(targetId, localStream);
       call.on('stream', s => {
         document.getElementById('remoteVideo').srcObject = s;
         document.getElementById('waitOverlay').style.display = 'none';
       });
-      call.on('error', () => { document.getElementById('connectErr').textContent = '視訊連線失敗'; });
     });
   }
 
-  function onData(msg) {
-    if (msg.type === 'text') {
-      allText = msg.text; renderText(allText);
-      setTimeout(scheduleViewportReport, 100);
-    } else if (msg.type === 'scrollPct') {
-      const el = document.getElementById('captionScroll');
-      el.scrollTop = msg.pct * (el.scrollHeight - el.clientHeight);
-      setTimeout(scheduleViewportReport, 100);
-    }
-  }
-
+  // ── SEND (REPLACE) ─────────────────────────────────────────
   function sendMsg() {
     const input = document.getElementById('msgInput');
-    const text = input.value.trim();
+    const text  = input.value.trim();
     if (!text) return;
-    if (allText.length > 0) allText += '\n';
-    allText += text;
-    renderText(allText);
-    setTimeout(() => {
-      const el = document.getElementById('captionScroll');
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-    }, 50);
-    if (conn && conn.open) conn.send({ type: 'text', text: allText });
-    input.value = ''; input.focus();
+
+    currentText = text; // replace, not append
+
+    // Render at viewer's font size if mirroring, else own
+    renderText(currentText, isMirrorMode ? vFontSize() : myFontSize());
+    document.getElementById('captionScroll').scrollTop = 0;
+
+    if (conn && conn.open) conn.send({ type: 'text', text: currentText });
+
+    input.value = '';
+    input.style.height = '';
+    input.focus();
   }
 
+  // Auto-grow textarea
+  window.addEventListener('load', () => {
+    const ta = document.getElementById('msgInput');
+    if (!ta) return;
+    ta.addEventListener('input', () => {
+      ta.style.height = '';
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+    });
+  });
+
   function copyLink() {
-    navigator.clipboard.writeText(document.getElementById('shareLink').textContent).catch(() => {});
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✓ 已複製！';
-    setTimeout(() => btn.textContent = '複製連結', 2000);
+    navigator.clipboard.writeText(document.getElementById('shareLink').textContent).catch(()=>{});
+    const b = document.getElementById('copyBtn');
+    b.textContent = '✓ 已複製！';
+    setTimeout(() => b.textContent = '複製連結', 2000);
   }
 
   function endCall() {
-    if (call) { call.close(); call = null; }
-    if (conn) { conn.close(); conn = null; }
-    if (peer) { peer.destroy(); peer = null; }
-    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-    micOn = true; camOn = true; allText = ''; charElements = [];
-    window.history.replaceState({}, '', window.location.pathname);
+    [call,conn,peer].forEach(x => x && x.close?.() || x?.destroy?.());
+    call=conn=peer=null;
+    if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+    micOn=true; camOn=true; currentText=''; isMirrorMode=false; viewerScreenWidth=0;
+    window.history.replaceState({}, '', location.pathname);
     location.reload();
   }
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey && document.activeElement?.id === 'msgInput') {
+    if (e.key==='Enter' && !e.shiftKey && document.activeElement?.id==='msgInput') {
       e.preventDefault(); sendMsg();
     }
   });
